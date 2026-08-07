@@ -3,24 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Pointeuse · Moule & smile</title>
+<title>Pointeuse · Moule & Smile</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ivory:#FAF6EE;
-    --ivory-dim:#F0E9DA;
-    --teal:#1B3A3F;
-    --teal-deep:#102528;
-    --terracotta:#C1602F;
-    --terracotta-soft:#E0916A;
+    --ivory:#F5F0E8;
+    --ivory-dim:#EDE6D6;
+    --teal:#1A1A1A;
+    --teal-deep:#0D0D0D;
+    --terracotta:#C9A84C;
+    --terracotta-soft:#E2C47A;
     --ok:#4C7A5E;
-    --warn:#C1602F;
+    --warn:#C9A84C;
     --danger:#A8412B;
-    --ink:#1E2624;
-    --line:rgba(27,58,63,0.14);
-    --shadow:0 12px 32px rgba(16,37,40,0.18);
+    --ink:#1A1A1A;
+    --line:rgba(201,168,76,0.2);
+    --shadow:0 12px 32px rgba(0,0,0,0.22);
     --radius:18px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -51,11 +51,11 @@
   }
   .brand{display:flex;align-items:center;gap:12px;}
   .brand-mark{
-    width:38px;height:38px;border-radius:50%;
+    width:42px;height:42px;border-radius:50%;
     background:var(--terracotta);
     display:flex;align-items:center;justify-content:center;
     font-family:'Big Shoulders Display',sans-serif;
-    font-weight:800;font-size:18px;color:var(--ivory);
+    font-weight:800;font-size:13px;color:#0D0D0D;letter-spacing:.03em;
     flex-shrink:0;
   }
   .brand-text{font-family:'Big Shoulders Display',sans-serif;font-weight:700;font-size:20px;letter-spacing:.03em;line-height:1;}
@@ -79,7 +79,7 @@
     background:#fff;border:1px solid var(--line);border-radius:var(--radius);
     padding:22px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;
     cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;
-    box-shadow:0 2px 8px rgba(16,37,40,0.06);
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
   }
   .emp-card:active{transform:scale(0.96);box-shadow:var(--shadow);}
   .emp-avatar{
@@ -94,11 +94,11 @@
     font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
     padding:3px 10px;border-radius:20px;
   }
-  .status-out{background:var(--ivory-dim);color:rgba(30,38,36,0.45);}
+  .status-out{background:var(--ivory-dim);color:rgba(26,26,26,0.45);}
   .status-in{background:rgba(76,122,94,0.14);color:var(--ok);}
-  .status-pause{background:rgba(193,96,47,0.14);color:var(--terracotta);}
+  .status-pause{background:rgba(201,168,76,0.14);color:var(--terracotta);}
 
-  .empty-state{text-align:center;padding:60px 20px;color:rgba(30,38,36,0.5);}
+  .empty-state{text-align:center;padding:60px 20px;color:rgba(26,26,26,0.5);}
   .empty-state b{display:block;font-family:'Big Shoulders Display',sans-serif;font-size:20px;color:var(--teal);margin-bottom:6px;}
 
   /* ---------- PIN SCREEN ---------- */
@@ -144,14 +144,14 @@
   }
   .confirm-icon.in{background:rgba(76,122,94,0.18);}
   .confirm-icon.out{background:rgba(168,65,43,0.18);}
-  .confirm-icon.pause{background:rgba(193,96,47,0.18);}
+  .confirm-icon.pause{background:rgba(201,168,76,0.18);}
   .confirm-icon svg{width:40px;height:40px;}
   .confirm-title{font-family:'Big Shoulders Display',sans-serif;font-size:30px;font-weight:700;margin-bottom:6px;}
   .confirm-name{font-size:16px;color:rgba(250,246,238,0.7);margin-bottom:4px;}
   .confirm-time{font-family:'Big Shoulders Display',sans-serif;font-size:46px;font-weight:700;color:var(--terracotta-soft);margin:14px 0;}
   .confirm-late{
     display:inline-block;margin-top:6px;padding:6px 16px;border-radius:20px;
-    background:rgba(168,65,43,0.2);color:#E0916A;font-size:13px;font-weight:700;
+    background:rgba(168,65,43,0.2);color:#E2C47A;font-size:13px;font-weight:700;
   }
 
   /* ---------- ADMIN ---------- */
@@ -176,30 +176,37 @@
   .btn-danger{background:transparent;color:var(--danger);border:1.5px solid rgba(168,65,43,0.3);}
   .btn-sm{padding:7px 12px;font-size:12.5px;border-radius:8px;}
 
-  table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(16,37,40,0.06);}
-  th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:rgba(30,38,36,0.45);padding:12px 14px;background:var(--ivory-dim);font-weight:700;}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+  th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:rgba(26,26,26,0.45);padding:12px 14px;background:var(--ivory-dim);font-weight:700;}
   td{padding:13px 14px;font-size:14px;border-top:1px solid var(--line);}
-  tr:hover td{background:rgba(193,96,47,0.04);}
+  tr:hover td{background:rgba(201,168,76,0.04);}
   .pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.02em;}
   .pill-in{background:rgba(76,122,94,0.14);color:var(--ok);}
-  .pill-out{background:var(--ivory-dim);color:rgba(30,38,36,0.45);}
-  .pill-pause{background:rgba(193,96,47,0.14);color:var(--terracotta);}
+  .pill-out{background:var(--ivory-dim);color:rgba(26,26,26,0.45);}
+  .pill-pause{background:rgba(201,168,76,0.14);color:var(--terracotta);}
   .pill-late{background:rgba(168,65,43,0.12);color:var(--danger);}
 
   .punch-cell{display:flex;align-items:center;gap:6px;}
   .punch-edit-btn{
-    border:none;background:transparent;cursor:pointer;color:rgba(30,38,36,0.35);
+    border:none;background:transparent;cursor:pointer;color:rgba(26,26,26,0.35);
     font-size:13px;padding:2px 5px;border-radius:6px;line-height:1;
   }
-  .punch-edit-btn:hover,.punch-edit-btn:active{background:rgba(193,96,47,0.12);color:var(--terracotta);}
+  .punch-edit-btn:hover,.punch-edit-btn:active{background:rgba(201,168,76,0.12);color:var(--terracotta);}
   .punch-add-btn{
-    border:1.5px dashed rgba(27,58,63,0.25);background:transparent;color:rgba(30,38,36,0.4);
+    border:1.5px dashed rgba(26,26,26,0.25);background:transparent;color:rgba(26,26,26,0.4);
     cursor:pointer;font-size:12px;padding:4px 9px;border-radius:8px;font-family:'Inter',sans-serif;font-weight:600;
   }
-  .punch-add-btn:hover,.punch-add-btn:active{border-color:var(--terracotta);color:var(--terracotta);background:rgba(193,96,47,0.06);}
+  .punch-add-btn:hover,.punch-add-btn:active{border-color:var(--terracotta);color:var(--terracotta);background:rgba(201,168,76,0.06);}
 
   .slot-line{padding:3px 0;}
   .slot-line:not(:last-child){border-bottom:1px dashed var(--line);margin-bottom:3px;}
+
+  .report-sub-tab{
+    border:1.5px solid var(--line);background:transparent;border-radius:8px;
+    padding:7px 14px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;
+    color:rgba(26,26,26,0.5);cursor:pointer;
+  }
+  .report-sub-tab.active{background:var(--teal);color:var(--ivory);border-color:var(--teal);}
 
   .anomaly-modal .modal{border-top:5px solid var(--danger);}
   .anomaly-item{
@@ -207,19 +214,19 @@
   }
   .anomaly-item:last-child{margin-bottom:0;}
   .anomaly-item-name{font-weight:700;color:var(--ink);font-size:14.5px;margin-bottom:3px;}
-  .anomaly-item-detail{font-size:13px;color:rgba(30,38,36,0.65);line-height:1.4;}
+  .anomaly-item-detail{font-size:13px;color:rgba(26,26,26,0.65);line-height:1.4;}
   .anomaly-item-legal{background:rgba(168,65,43,0.1);border:1px solid rgba(168,65,43,0.25);}
 
   .rules-info-box{
-    background:rgba(27,58,63,0.05);border:1px solid var(--line);border-radius:14px;
+    background:rgba(26,26,26,0.05);border:1px solid var(--line);border-radius:14px;
     padding:16px 20px;margin-bottom:20px;
   }
   .rules-info-title{font-weight:700;font-size:13px;color:var(--teal);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em;}
-  .rules-info-list{margin:0;padding-left:18px;font-size:13.5px;color:rgba(30,38,36,0.75);line-height:1.7;}
+  .rules-info-list{margin:0;padding-left:18px;font-size:13.5px;color:rgba(26,26,26,0.75);line-height:1.7;}
   .rules-info-list li{margin-bottom:2px;}
 
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(16,37,40,0.55);
+    position:fixed;inset:0;background:rgba(0,0,0,0.55);
     display:flex;align-items:center;justify-content:center;z-index:200;
     opacity:0;visibility:hidden;transition:.2s;padding:20px;
   }
@@ -227,7 +234,7 @@
   .modal{background:#fff;border-radius:18px;padding:26px;max-width:420px;width:100%;box-shadow:var(--shadow);max-height:88vh;overflow-y:auto;}
   .modal h3{font-family:'Big Shoulders Display',sans-serif;font-size:20px;color:var(--teal);margin:0 0 16px;}
   .field{margin-bottom:14px;}
-  .field label{display:block;font-size:12.5px;font-weight:600;color:rgba(30,38,36,0.6);margin-bottom:6px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:rgba(26,26,26,0.6);margin-bottom:6px;}
   .field input,.field select{
     width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:9px;
     font-size:15px;font-family:'Inter',sans-serif;background:var(--ivory);
@@ -236,9 +243,9 @@
   .modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
 
   .stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
-  .stat-card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(16,37,40,0.06);}
+  .stat-card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
   .stat-num{font-family:'Big Shoulders Display',sans-serif;font-size:28px;font-weight:700;color:var(--teal);}
-  .stat-label{font-size:12px;color:rgba(30,38,36,0.5);margin-top:2px;}
+  .stat-label{font-size:12px;color:rgba(26,26,26,0.5);margin-top:2px;}
 
   .toast{
     position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -256,7 +263,7 @@
   .lock-screen input:focus{outline:2px solid var(--terracotta);}
 
   ::-webkit-scrollbar{width:8px;}
-  ::-webkit-scrollbar-thumb{background:rgba(27,58,63,0.2);border-radius:10px;}
+  ::-webkit-scrollbar-thumb{background:rgba(26,26,26,0.2);border-radius:10px;}
 
   @media (max-width:480px){
     .topbar{padding:14px 18px;}
@@ -273,7 +280,7 @@
   <div class="screen active" id="screen-home">
     <div class="topbar">
       <div class="brand">
-        <div class="brand-mark">MB</div>
+        <div class="brand-mark">M&S</div>
         <div class="brand-text">MOULE & SMILE<span>Pointage équipe</span></div>
       </div>
       <div class="clock" id="home-clock">--:--<span class="date" id="home-date">—</span></div>
@@ -315,8 +322,8 @@
   <div class="screen" id="screen-admin">
     <div class="topbar">
       <div class="brand">
-        <div class="brand-mark">MB</div>
-        <div class="brand-text">ADMINISTRATION<span>Moule & smile</span></div>
+        <div class="brand-mark">M&S</div>
+        <div class="brand-text">ADMINISTRATION<span>Moule & Smile</span></div>
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
         <button class="btn btn-ghost btn-sm" id="admin-exit-btn">Fermer</button>
@@ -400,21 +407,38 @@
       <div class="admin-section" id="tab-reports">
         <div class="admin-row-title">
           <div class="admin-h">Rapport mensuel</div>
-          <div style="display:flex;gap:10px;">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
             <select id="report-month" class="btn-ghost" style="border:1.5px solid var(--line);border-radius:10px;padding:9px 14px;font-family:Inter;font-size:14px;"></select>
+            <div style="display:flex;gap:6px;">
+              <button class="report-sub-tab active" data-rtab="summary">Résumé</button>
+              <button class="report-sub-tab" data-rtab="detail">Détail par jour</button>
+            </div>
             <button class="btn btn-primary btn-sm" id="export-csv-btn">Exporter CSV</button>
           </div>
         </div>
-        <div class="stat-cards" id="report-stats"></div>
-        <table>
-          <thead><tr><th>Équipier</th><th>Jours travaillés</th><th>Heures totales</th><th>Retards</th></tr></thead>
-          <tbody id="report-table-body"></tbody>
-        </table>
+
+        <!-- Résumé -->
+        <div id="report-view-summary">
+          <div class="stat-cards" id="report-stats"></div>
+          <table>
+            <thead><tr><th>Équipier</th><th>Jours travaillés</th><th>Heures totales</th></tr></thead>
+            <tbody id="report-table-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Détail par jour -->
+        <div id="report-view-detail" style="display:none;">
+          <table>
+            <thead><tr><th>Équipier</th><th>Date</th><th>Entrée</th><th>Sortie</th><th>Heures du jour</th></tr></thead>
+            <tbody id="report-detail-body"></tbody>
+          </table>
+          <div id="report-detail-total" style="text-align:right;margin-top:14px;font-family:'Big Shoulders Display',sans-serif;font-size:18px;font-weight:700;color:var(--teal);"></div>
+        </div>
       </div>
 
       <div class="admin-section" id="tab-settings">
         <div class="admin-h" style="margin-bottom:18px;">Réglages</div>
-        <div style="background:#fff;border-radius:14px;padding:22px;max-width:420px;box-shadow:0 2px 8px rgba(16,37,40,0.06);">
+        <div style="background:#fff;border-radius:14px;padding:22px;max-width:420px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
           <div class="field">
             <label>Nouveau code admin (4 à 6 chiffres)</label>
             <input type="password" id="setting-admin-pin" placeholder="••••" maxlength="6" inputmode="numeric">
@@ -434,7 +458,7 @@
       <button class="btn btn-ghost" id="lock-cancel-btn" style="color:rgba(250,246,238,0.6);border-color:rgba(250,246,238,0.2);">Annuler</button>
       <button class="btn btn-primary" id="lock-confirm-btn">Valider</button>
     </div>
-    <div style="color:#E0916A;font-size:13px;height:20px;margin-top:8px;" id="lock-error"></div>
+    <div style="color:#E2C47A;font-size:13px;height:20px;margin-top:8px;" id="lock-error"></div>
   </div>
 
   <!-- ===================== EMPLOYEE MODAL ===================== -->

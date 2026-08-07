@@ -6,12 +6,12 @@
 // ⚠️ Thomas : remplace ces valeurs par celles de TON nouveau projet Firebase
 // (Console Firebase > Paramètres du projet > Tes applications > Config SDK)
 const firebaseConfig = {
-  apiKey: "AIzaSyBZ03rRzX8DL5Xgqn7U1p8PfiL83Zqtmvc",
-  authDomain: "pointagemarmitebleue.firebaseapp.com",
-  projectId: "pointagemarmitebleue",
-  storageBucket: "pointagemarmitebleue.firebasestorage.app",
-  messagingSenderId: "483578019330",
-  appId: "1:483578019330:web:f15b69bfd7d652b773711b"
+  apiKey: "REMPLACE_MOI",
+  authDomain: "REMPLACE_MOI.firebaseapp.com",
+  projectId: "REMPLACE_MOI",
+  storageBucket: "REMPLACE_MOI.appspot.com",
+  messagingSenderId: "REMPLACE_MOI",
+  appId: "REMPLACE_MOI"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -1159,7 +1159,7 @@ document.querySelectorAll(".admin-tab").forEach(tab=>{
     document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));
     tab.classList.add("active");
     document.getElementById("tab-"+tab.dataset.tab).classList.add("active");
-    if(tab.dataset.tab === "reports") renderReportTable();
+    if(tab.dataset.tab === "reports"){ renderReportTable(); renderReportDetailTable(); }
     if(tab.dataset.tab === "control") renderControlTable();
     if(tab.dataset.tab === "anomalies") renderAnomaliesTab();
   });
@@ -1340,20 +1340,33 @@ function populateReportMonths(){
     opts.push(`<option value="${value}">${label.charAt(0).toUpperCase()+label.slice(1)}</option>`);
   }
   sel.innerHTML = opts.join("");
-  sel.addEventListener("change", renderReportTable);
+  sel.addEventListener("change", ()=>{ renderReportTable(); renderReportDetailTable(); });
+
+  // Sous-onglets Résumé / Détail
+  document.querySelectorAll(".report-sub-tab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll(".report-sub-tab").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      const tab = btn.dataset.rtab;
+      document.getElementById("report-view-summary").style.display = tab==="summary" ? "" : "none";
+      document.getElementById("report-view-detail").style.display = tab==="detail" ? "" : "none";
+      if(tab==="detail") renderReportDetailTable();
+    });
+  });
 }
 
-let reportCache = []; // dernier rapport calculé, pour export CSV
+let reportCache = [];       // résumé (pour export CSV résumé)
+let reportDetailCache = []; // détail (pour export CSV détail)
 
 async function renderReportTable(){
-  const monthVal = document.getElementById("report-month").value; // "YYYY-MM"
+  const monthVal = document.getElementById("report-month").value;
   if(!monthVal) return;
   const [year, month] = monthVal.split("-").map(Number);
   const start = new Date(year, month-1, 1, 0,0,0);
   const end = new Date(year, month, 1, 0,0,0);
 
   const tbody = document.getElementById("report-table-body");
-  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:30px;color:rgba(30,38,36,0.4);">Chargement…</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:30px;color:rgba(26,26,26,0.4);">Chargement…</td></tr>`;
 
   let snap;
   try{
@@ -1364,13 +1377,11 @@ async function renderReportTable(){
       .get();
   }catch(e){
     console.error(e);
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--danger);">Erreur de chargement</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:30px;color:var(--danger);">Erreur de chargement</td></tr>`;
     return;
   }
 
   const punches = snap.docs.map(d=>({id:d.id, ...d.data()}));
-
-  // Regrouper par employé puis par jour pour calculer les heures
   const byEmployee = {};
   punches.forEach(p=>{
     if(!byEmployee[p.employeeId]) byEmployee[p.employeeId] = { name:p.employeeName, byDay:{} };
@@ -1379,9 +1390,7 @@ async function renderReportTable(){
     byEmployee[p.employeeId].byDay[day].push(p);
   });
 
-  let rows = [];
-  let totalHoursAll = 0;
-
+  let rows = [], totalHoursAll = 0;
   Object.entries(byEmployee).forEach(([empId, data])=>{
     let totalMs = 0, daysWorked = 0;
     Object.values(data.byDay).forEach(dayPunches=>{
@@ -1389,12 +1398,8 @@ async function renderReportTable(){
       dayPunches.sort((a,b)=>a.timestamp.toMillis()-b.timestamp.toMillis());
       let openStart = null;
       dayPunches.forEach(p=>{
-        if(p.type==="in" || p.type==="resume"){
-          openStart = p.timestamp.toMillis();
-        } else if((p.type==="pause"||p.type==="out") && openStart!==null){
-          totalMs += p.timestamp.toMillis() - openStart;
-          openStart = null;
-        }
+        if(p.type==="in"||p.type==="resume") openStart=p.timestamp.toMillis();
+        else if((p.type==="pause"||p.type==="out")&&openStart!==null){ totalMs+=p.timestamp.toMillis()-openStart; openStart=null; }
       });
     });
     totalHoursAll += totalMs;
@@ -1405,7 +1410,7 @@ async function renderReportTable(){
   reportCache = rows;
 
   if(rows.length === 0){
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:30px;color:rgba(30,38,36,0.4);">Aucun pointage ce mois-ci</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:30px;color:rgba(26,26,26,0.4);">Aucun pointage ce mois-ci</td></tr>`;
   } else {
     tbody.innerHTML = rows.map(r=>`
       <tr>
@@ -1421,24 +1426,124 @@ async function renderReportTable(){
   `;
 }
 
-document.getElementById("export-csv-btn").addEventListener("click", ()=>{
-  if(reportCache.length === 0){ showToast("Aucune donnée à exporter"); return; }
-  const monthLabel = document.getElementById("report-month").selectedOptions[0]?.textContent || "rapport";
-  let csv = "Équipier;Jours travaillés;Heures totales\n";
-  reportCache.forEach(r=>{
-    csv += `${r.name};${r.daysWorked};${fmtDuration(r.totalMs).replace("h",",")}\n`;
+// ---------- RAPPORT DÉTAILLÉ : salarié / date / entrée / sortie / heures du jour ----------
+async function renderReportDetailTable(){
+  const monthVal = document.getElementById("report-month").value;
+  if(!monthVal) return;
+  const [year, month] = monthVal.split("-").map(Number);
+  const start = new Date(year, month-1, 1, 0,0,0);
+  const end = new Date(year, month, 1, 0,0,0);
+
+  const tbody = document.getElementById("report-detail-body");
+  const totalEl = document.getElementById("report-detail-total");
+  tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:rgba(26,26,26,0.4);">Chargement…</td></tr>`;
+  totalEl.textContent = "";
+
+  let snap;
+  try{
+    snap = await db.collection("punches")
+      .where("timestamp",">=", firebase.firestore.Timestamp.fromDate(start))
+      .where("timestamp","<", firebase.firestore.Timestamp.fromDate(end))
+      .orderBy("timestamp","asc")
+      .get();
+  }catch(e){
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--danger);">Erreur de chargement</td></tr>`;
+    return;
+  }
+
+  const punches = snap.docs.map(d=>({id:d.id, ...d.data()}));
+
+  // Regrouper par employé puis par jour
+  const byEmployee = {};
+  punches.forEach(p=>{
+    if(!byEmployee[p.employeeId]) byEmployee[p.employeeId] = { name:p.employeeName, byDay:{} };
+    const day = todayKey(p.timestamp.toDate());
+    if(!byEmployee[p.employeeId].byDay[day]) byEmployee[p.employeeId].byDay[day] = [];
+    byEmployee[p.employeeId].byDay[day].push(p);
   });
+
+  let detailRows = [], grandTotalMs = 0;
+
+  Object.entries(byEmployee).forEach(([empId, data])=>{
+    Object.entries(data.byDay).sort(([a],[b])=>a.localeCompare(b)).forEach(([day, dayPunches])=>{
+      const sorted = [...dayPunches].sort((a,b)=>a.timestamp.toMillis()-b.timestamp.toMillis());
+      const firstIn = sorted.find(p=>p.type==="in");
+      const lastOut = [...sorted].reverse().find(p=>p.type==="out");
+
+      let dayMs = 0, openStart = null;
+      sorted.forEach(p=>{
+        if(p.type==="in"||p.type==="resume") openStart=p.timestamp.toMillis();
+        else if((p.type==="pause"||p.type==="out")&&openStart!==null){ dayMs+=p.timestamp.toMillis()-openStart; openStart=null; }
+      });
+      grandTotalMs += dayMs;
+
+      const [y,m,d] = day.split("-").map(Number);
+      const dateLabel = new Date(y,m-1,d).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+
+      detailRows.push({
+        name: data.name,
+        dateLabel,
+        inTime: firstIn ? fmtTime(firstIn.timestamp.toDate()) : "—",
+        outTime: lastOut ? fmtTime(lastOut.timestamp.toDate()) : "—",
+        dayMs
+      });
+    });
+  });
+
+  reportDetailCache = detailRows;
+
+  if(detailRows.length === 0){
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:rgba(26,26,26,0.4);">Aucun pointage ce mois-ci</td></tr>`;
+  } else {
+    // Grouper visuellement par salarié avec un sous-total par salarié
+    const byName = {};
+    detailRows.forEach(r=>{ if(!byName[r.name]) byName[r.name]=[]; byName[r.name].push(r); });
+    tbody.innerHTML = Object.entries(byName).sort(([a],[b])=>a.localeCompare(b)).map(([name, rows])=>{
+      const subTotal = rows.reduce((s,r)=>s+r.dayMs,0);
+      const dataRows = rows.map((r,i)=>`
+        <tr>
+          ${i===0 ? `<td rowspan="${rows.length}" style="vertical-align:top;padding-top:14px;"><b>${escapeHtml(name)}</b></td>` : ""}
+          <td>${r.dateLabel}</td>
+          <td>${r.inTime}</td>
+          <td>${r.outTime}</td>
+          <td>${r.dayMs>0 ? fmtDuration(r.dayMs) : "—"}</td>
+        </tr>`).join("");
+      return dataRows + `<tr style="background:rgba(201,168,76,0.08);border-top:2px solid var(--line);">
+        <td></td><td colspan="3" style="font-weight:700;color:var(--teal);">Total ${escapeHtml(name)}</td>
+        <td style="font-weight:700;">${fmtDuration(subTotal)}</td>
+      </tr>`;
+    }).join("");
+    totalEl.innerHTML = `Grand total équipe : <span style="color:var(--terracotta);">${fmtDuration(grandTotalMs)}</span>`;
+  }
+}
+
+document.getElementById("export-csv-btn").addEventListener("click", ()=>{
+  const monthLabel = document.getElementById("report-month").selectedOptions[0]?.textContent || "rapport";
+  const activeTab = document.querySelector(".report-sub-tab.active")?.dataset.rtab || "summary";
+
+  if(activeTab === "summary"){
+    if(reportCache.length === 0){ showToast("Aucune donnée à exporter"); return; }
+    let csv = "Équipier;Jours travaillés;Heures totales\n";
+    reportCache.forEach(r=>{ csv += `${r.name};${r.daysWorked};${fmtDuration(r.totalMs).replace("h",",")}\n`; });
+    exportCsv(csv, `resume_${monthLabel.replace(/\s+/g,"_")}.csv`);
+  } else {
+    if(reportDetailCache.length === 0){ showToast("Aucune donnée à exporter"); return; }
+    let csv = "Équipier;Date;Entrée;Sortie;Heures du jour\n";
+    reportDetailCache.forEach(r=>{ csv += `${r.name};${r.dateLabel};${r.inTime};${r.outTime};${r.dayMs>0?fmtDuration(r.dayMs).replace("h",","):""}\n`; });
+    exportCsv(csv, `detail_${monthLabel.replace(/\s+/g,"_")}.csv`);
+  }
+  showToast("Export CSV téléchargé ✓");
+});
+
+function exportCsv(csv, filename){
   const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = `pointage_${monthLabel.replace(/\s+/g,"_")}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast("Export CSV téléchargé ✓");
-});
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
 
 // ============================================================
 // ADMIN — SETTINGS
