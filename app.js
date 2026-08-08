@@ -4,7 +4,7 @@
 
 // ---------- FIREBASE CONFIG ----------
 // ⚠️ Thomas : remplace ces valeurs par celles de TON nouveau projet Firebase
-(Console Firebase > Paramètres du projet > Tes applications > Config SDK)
+// (Console Firebase > Paramètres du projet > Tes applications > Config SDK)
 const firebaseConfig = {
   apiKey: "AIzaSyBZ03rRzX8DL5Xgqn7U1p8PfiL83Zqtmvc",
   authDomain: "pointagemarmitebleue.firebaseapp.com",
