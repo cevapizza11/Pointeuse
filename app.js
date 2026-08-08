@@ -1427,12 +1427,33 @@ async function renderReportTable(){
 }
 
 // ---------- RAPPORT DÉTAILLÉ : salarié / date / entrée / sortie / heures du jour ----------
-async function renderReportDetailTable(){
+// Initialise les champs de date du détail sur le mois courant au premier affichage
+function initDetailDateRange(){
+  const startEl = document.getElementById("detail-date-start");
+  const endEl = document.getElementById("detail-date-end");
+  if(startEl.value && endEl.value) return; // déjà initialisé
   const monthVal = document.getElementById("report-month").value;
   if(!monthVal) return;
   const [year, month] = monthVal.split("-").map(Number);
-  const start = new Date(year, month-1, 1, 0,0,0);
-  const end = new Date(year, month, 1, 0,0,0);
+  const first = new Date(year, month-1, 1);
+  const last = new Date(year, month, 0); // dernier jour du mois
+  startEl.value = todayKey(first);
+  endEl.value = todayKey(last);
+}
+
+async function renderReportDetailTable(){
+  initDetailDateRange();
+  const startVal = document.getElementById("detail-date-start").value;
+  const endVal = document.getElementById("detail-date-end").value;
+
+  if(!startVal || !endVal){ showToast("Choisissez une date de début et de fin"); return; }
+
+  const [sy,sm,sd] = startVal.split("-").map(Number);
+  const [ey,em,ed] = endVal.split("-").map(Number);
+  const start = new Date(sy, sm-1, sd, 0,0,0);
+  const end = new Date(ey, em-1, ed, 23,59,59,999);
+
+  if(start > end){ showToast("La date de début doit être avant la date de fin"); return; }
 
   const tbody = document.getElementById("report-detail-body");
   const totalEl = document.getElementById("report-detail-total");
@@ -1443,7 +1464,7 @@ async function renderReportDetailTable(){
   try{
     snap = await db.collection("punches")
       .where("timestamp",">=", firebase.firestore.Timestamp.fromDate(start))
-      .where("timestamp","<", firebase.firestore.Timestamp.fromDate(end))
+      .where("timestamp","<=", firebase.firestore.Timestamp.fromDate(end))
       .orderBy("timestamp","asc")
       .get();
   }catch(e){
@@ -1454,7 +1475,6 @@ async function renderReportDetailTable(){
 
   const punches = snap.docs.map(d=>({id:d.id, ...d.data()}));
 
-  // Regrouper par employé puis par jour
   const byEmployee = {};
   punches.forEach(p=>{
     if(!byEmployee[p.employeeId]) byEmployee[p.employeeId] = { name:p.employeeName, byDay:{} };
@@ -1470,20 +1490,16 @@ async function renderReportDetailTable(){
       const sorted = [...dayPunches].sort((a,b)=>a.timestamp.toMillis()-b.timestamp.toMillis());
       const firstIn = sorted.find(p=>p.type==="in");
       const lastOut = [...sorted].reverse().find(p=>p.type==="out");
-
       let dayMs = 0, openStart = null;
       sorted.forEach(p=>{
         if(p.type==="in"||p.type==="resume") openStart=p.timestamp.toMillis();
         else if((p.type==="pause"||p.type==="out")&&openStart!==null){ dayMs+=p.timestamp.toMillis()-openStart; openStart=null; }
       });
       grandTotalMs += dayMs;
-
       const [y,m,d] = day.split("-").map(Number);
       const dateLabel = new Date(y,m-1,d).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
-
       detailRows.push({
-        name: data.name,
-        dateLabel,
+        name: data.name, dateLabel,
         inTime: firstIn ? fmtTime(firstIn.timestamp.toDate()) : "—",
         outTime: lastOut ? fmtTime(lastOut.timestamp.toDate()) : "—",
         dayMs
@@ -1494,9 +1510,8 @@ async function renderReportDetailTable(){
   reportDetailCache = detailRows;
 
   if(detailRows.length === 0){
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:rgba(26,26,26,0.4);">Aucun pointage ce mois-ci</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:rgba(26,26,26,0.4);">Aucun pointage sur cette période</td></tr>`;
   } else {
-    // Grouper visuellement par salarié avec un sous-total par salarié
     const byName = {};
     detailRows.forEach(r=>{ if(!byName[r.name]) byName[r.name]=[]; byName[r.name].push(r); });
     tbody.innerHTML = Object.entries(byName).sort(([a],[b])=>a.localeCompare(b)).map(([name, rows])=>{
@@ -1518,6 +1533,9 @@ async function renderReportDetailTable(){
   }
 }
 
+document.getElementById("detail-apply-btn").addEventListener("click", renderReportDetailTable);
+
+
 document.getElementById("export-csv-btn").addEventListener("click", ()=>{
   const monthLabel = document.getElementById("report-month").selectedOptions[0]?.textContent || "rapport";
   const activeTab = document.querySelector(".report-sub-tab.active")?.dataset.rtab || "summary";
@@ -1529,6 +1547,9 @@ document.getElementById("export-csv-btn").addEventListener("click", ()=>{
     exportCsv(csv, `resume_${monthLabel.replace(/\s+/g,"_")}.csv`);
   } else {
     if(reportDetailCache.length === 0){ showToast("Aucune donnée à exporter"); return; }
+    const startVal = document.getElementById("detail-date-start").value || monthLabel;
+    const endVal = document.getElementById("detail-date-end").value || monthLabel;
+    const periodLabel = startVal === endVal ? startVal : `${startVal}_au_${endVal}`;
     let csv = "Équipier;Date;Entrée;Sortie;Heures du jour\n";
     const byName = {};
     reportDetailCache.forEach(r=>{ if(!byName[r.name]) byName[r.name]=[]; byName[r.name].push(r); });
@@ -1545,7 +1566,7 @@ document.getElementById("export-csv-btn").addEventListener("click", ()=>{
       csv += `\n`;
     });
     csv += `GRAND TOTAL ÉQUIPE;;;;${fmtDuration(grandTotalMs)}\n`;
-    exportCsv(csv, `detail_${monthLabel.replace(/\s+/g,"_")}.csv`);
+    exportCsv(csv, `detail_${periodLabel}.csv`);
   }
   showToast("Export CSV téléchargé ✓");
 });

@@ -429,6 +429,16 @@
 
         <!-- Détail par jour -->
         <div id="report-view-detail" style="display:none;">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:14px 16px;background:var(--ivory-dim);border-radius:12px;">
+            <span style="font-size:13px;font-weight:700;color:var(--teal);">Période :</span>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <label style="font-size:13px;color:rgba(26,26,26,0.6);">Du</label>
+              <input type="date" id="detail-date-start" style="border:1.5px solid var(--line);border-radius:9px;padding:8px 12px;font-family:Inter;font-size:14px;background:#fff;">
+              <label style="font-size:13px;color:rgba(26,26,26,0.6);">au</label>
+              <input type="date" id="detail-date-end" style="border:1.5px solid var(--line);border-radius:9px;padding:8px 12px;font-family:Inter;font-size:14px;background:#fff;">
+              <button class="btn btn-primary btn-sm" id="detail-apply-btn">Afficher</button>
+            </div>
+          </div>
           <table>
             <thead><tr><th>Équipier</th><th>Date</th><th>Entrée</th><th>Sortie</th><th>Heures du jour</th></tr></thead>
             <tbody id="report-detail-body"></tbody>
