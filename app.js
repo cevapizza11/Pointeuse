@@ -1530,7 +1530,22 @@ document.getElementById("export-csv-btn").addEventListener("click", ()=>{
   } else {
     if(reportDetailCache.length === 0){ showToast("Aucune donnée à exporter"); return; }
     let csv = "Équipier;Date;Entrée;Sortie;Heures du jour\n";
-    reportDetailCache.forEach(r=>{ csv += `${r.name};${r.dateLabel};${r.inTime};${r.outTime};${r.dayMs>0?fmtDuration(r.dayMs).replace("h",","):""}\n`; });
+    // Regrouper par employé pour insérer les sous-totaux
+    const byName = {};
+    reportDetailCache.forEach(r=>{ if(!byName[r.name]) byName[r.name]=[]; byName[r.name].push(r); });
+    let grandTotalMs = 0;
+    Object.entries(byName).sort(([a],[b])=>a.localeCompare(b)).forEach(([name, rows])=>{
+      let subTotalMs = 0;
+      rows.forEach(r=>{
+        const h = r.dayMs>0 ? fmtDuration(r.dayMs).replace("h",",") : "";
+        csv += `${r.name};${r.dateLabel};${r.inTime};${r.outTime};${h}\n`;
+        subTotalMs += r.dayMs;
+      });
+      grandTotalMs += subTotalMs;
+      csv += `TOTAL ${name};;;;${fmtDuration(subTotalMs).replace("h",",")}\n`;
+      csv += `\n`; // ligne vide entre chaque employé
+    });
+    csv += `GRAND TOTAL ÉQUIPE;;;;${fmtDuration(grandTotalMs).replace("h",",")}\n`;
     exportCsv(csv, `detail_${monthLabel.replace(/\s+/g,"_")}.csv`);
   }
   showToast("Export CSV téléchargé ✓");
