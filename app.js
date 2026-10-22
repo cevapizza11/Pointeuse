@@ -1,5 +1,5 @@
 /* ============================================================
-   POINTEUSE LA MARMITE BLEUE
+   POINTEUSE MOULE & SMILE — accès réservé aux appareils activés (22/10/2026)
    ============================================================ */
 
 // ---------- FIREBASE CONFIG ----------
@@ -16,6 +16,12 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+// ---------- SÉCURITÉ (22/10/2026) ----------
+// Les règles Firestore n'autorisent que ce compte : sans lui, personne ne peut lire
+// ni modifier les pointages, même en connaissant l'adresse de la base.
+// Le compte se crée dans Firebase > Authentication (projet pointagemarmitebleue).
+const EMAIL_POINTEUSE = "tmjumeaux@gmail.com";
 
 // Collections Firestore utilisées :
 //   employees   { id, name, pinHash, plannedTime, active, createdAt }
@@ -1610,4 +1616,47 @@ async function init(){
   listenEmployees();
   listenTodayPunches();
 }
-init();
+
+// Démarrage : la pointeuse ne s'ouvre que sur un appareil activé (connecté avec le compte de la pointeuse)
+let pointeuseDemarree = false;
+function afficherActivation(visible){
+  document.getElementById("screen-activation").style.display = visible ? "flex" : "none";
+  if(visible) setTimeout(()=>document.getElementById("activation-pwd").focus(), 100);
+}
+async function activerAppareil(){
+  const champ = document.getElementById("activation-pwd");
+  const err = document.getElementById("activation-err");
+  const pwd = champ.value;
+  err.style.color = "#ff8a80";
+  err.textContent = "";
+  if(!pwd){ err.textContent = "Entrez le mot de passe"; return; }
+  try{
+    await firebase.auth().signInWithEmailAndPassword(EMAIL_POINTEUSE, pwd);
+    champ.value = "";
+  }catch(e){
+    console.error(e);
+    err.textContent = (e.code === "auth/too-many-requests") ? "Trop d'essais — réessayez dans quelques minutes"
+      : (e.code === "auth/network-request-failed") ? "Pas de connexion internet"
+      : "❌ Mot de passe incorrect";
+  }
+}
+document.getElementById("activation-btn").addEventListener("click", activerAppareil);
+// Mot de passe oublié : Firebase envoie un e-mail de réinitialisation à l'adresse du compte de la pointeuse
+document.getElementById("activation-oubli").addEventListener("click", async ()=>{
+  const err = document.getElementById("activation-err");
+  try{
+    await firebase.auth().sendPasswordResetEmail(EMAIL_POINTEUSE);
+    err.style.color = "#8fd19e";
+    err.textContent = "📧 E-mail de réinitialisation envoyé au gérant";
+  }catch(e){
+    console.error(e);
+    err.style.color = "#ff8a80";
+    err.textContent = "Envoi impossible — réessayez plus tard";
+  }
+});
+document.getElementById("activation-pwd").addEventListener("keydown", e=>{ if(e.key === "Enter") activerAppareil(); });
+firebase.auth().onAuthStateChanged(user=>{
+  const autorise = !!(user && !user.isAnonymous && user.email === EMAIL_POINTEUSE);
+  afficherActivation(!autorise);
+  if(autorise && !pointeuseDemarree){ pointeuseDemarree = true; init(); }
+});

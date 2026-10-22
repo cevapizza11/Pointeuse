@@ -277,6 +277,21 @@
 </style>
 </head>
 <body>
+<!-- ===================== ACTIVATION DE L'APPAREIL (sécurité) =====================
+     La base des pointages n'est accessible qu'aux appareils connectés avec le compte
+     de la pointeuse. À faire UNE seule fois par tablette : la session reste gardée. -->
+<div id="screen-activation" style="display:none;position:fixed;inset:0;z-index:9999;background:#0D0D0D;color:#F5F0E8;align-items:center;justify-content:center;padding:24px;font-family:Inter,sans-serif">
+  <div style="width:100%;max-width:380px;text-align:center">
+    <div style="width:74px;height:74px;border-radius:50%;background:#C9A84C;color:#0D0D0D;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:26px">M&amp;S</div>
+    <div style="font-family:'Big Shoulders Display',sans-serif;font-weight:700;font-size:24px;letter-spacing:.03em">ACTIVER CETTE TABLETTE</div>
+    <div style="font-size:13px;color:#E2C47A;margin:10px 0 18px;line-height:1.5">🔒 Pour protéger les pointages, seuls les appareils activés par le gérant peuvent ouvrir la pointeuse.<br>À faire une seule fois sur cet appareil.</div>
+    <input id="activation-pwd" type="password" autocomplete="current-password" placeholder="Mot de passe de la pointeuse" style="width:100%;padding:14px;border-radius:12px;border:1px solid #C9A84C;background:#1A1A1A;color:#F5F0E8;font-size:16px;box-sizing:border-box">
+    <button id="activation-btn" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:#C9A84C;color:#0D0D0D;font-weight:700;font-size:16px;cursor:pointer">🔓 Activer</button>
+    <div id="activation-err" style="color:#ff8a80;font-size:13px;min-height:18px;margin-top:10px"></div>
+    <button id="activation-oubli" type="button" style="background:none;border:none;color:#E2C47A;text-decoration:underline;font-size:13px;cursor:pointer;margin-top:4px">Mot de passe oublié ?</button>
+    <div style="font-size:11px;color:#8a8577;margin-top:14px">Pointeuse · v.22/10/2026 10:55</div>
+  </div>
+</div>
 <div id="app">
 
   <!-- ===================== HOME SCREEN ===================== -->
@@ -284,7 +299,7 @@
     <div class="topbar">
       <div class="brand">
         <div class="brand-mark">M&S</div>
-        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.17/10/2026 09:00</span></div>
+        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.22/10/2026 10:55</span></div>
       </div>
       <div class="clock" id="home-clock">--:--<span class="date" id="home-date">—</span></div>
       <div class="admin-dot" id="admin-dot-trigger" title=""></div>
@@ -544,6 +559,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="app.js?v=20261022a"></script>
 </body>
 </html>
