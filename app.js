@@ -1627,7 +1627,7 @@ async function activerAppareil(){
   const champ = document.getElementById("activation-pwd");
   const err = document.getElementById("activation-err");
   const pwd = champ.value;
-  err.style.color = "#ff8a80";
+  err.style.color = "var(--red)";
   err.textContent = "";
   if(!pwd){ err.textContent = "Entrez le mot de passe"; return; }
   try{
@@ -1646,11 +1646,11 @@ document.getElementById("activation-oubli").addEventListener("click", async ()=>
   const err = document.getElementById("activation-err");
   try{
     await firebase.auth().sendPasswordResetEmail(EMAIL_POINTEUSE);
-    err.style.color = "#8fd19e";
+    err.style.color = "var(--green)";
     err.textContent = "📧 E-mail de réinitialisation envoyé au gérant";
   }catch(e){
     console.error(e);
-    err.style.color = "#ff8a80";
+    err.style.color = "var(--red)";
     err.textContent = "Envoi impossible — réessayez plus tard";
   }
 });
