@@ -520,7 +520,8 @@ async function checkLegalAnomalies(refDate){
     }
 
     const emp = state.employees.find(e=>e.id===empId);
-    if(emp && emp.contractType === "temps_partiel" && emp.contractHours){
+    // Temps partiel = contrat de moins de 35 h, quel que soit le type (CDI, CDD, Extra…) — 19/11/2026
+    if(emp && emp.contractHours && emp.contractHours < 35){
       const contractMs = emp.contractHours * 60 * 60 * 1000;
       const thresholdMs = contractMs * 1.10; // 10% d'heures complémentaires max
       if(weekWork > thresholdMs){
@@ -1227,13 +1228,14 @@ function renderEmployeesTable(){
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:rgba(30,38,36,0.4);padding:30px;">Aucun équipier. Cliquez sur "+ Ajouter".</td></tr>`;
     return;
   }
-  const CONTRACT_LABELS = { temps_plein:"Temps plein", temps_partiel:"Temps partiel" };
+  // Même liste que Planning & RH (anciens libellés gardés pour les fiches existantes)
+  const CONTRACT_LABELS = { CDI:"CDI", CDD:"CDD", Extra:"Extra", Apprenti:"Apprenti", Saisonnier:"Saisonnier", Stage:"Stage", temps_plein:"Temps plein", temps_partiel:"Temps partiel" };
   tbody.innerHTML = state.employees.map(emp=>{
     const {status} = lastStatusFor(emp.id);
     const statusPill = status==="in" ? `<span class="pill pill-in">En service</span>`
       : status==="pause" ? `<span class="pill pill-pause">En pause</span>`
       : `<span class="pill pill-out">Hors service</span>`;
-    const contractLabel = emp.contractType ? `${CONTRACT_LABELS[emp.contractType]} · ${emp.contractHours}h` : "—";
+    const contractLabel = emp.contractType ? `${CONTRACT_LABELS[emp.contractType]||emp.contractType} · ${emp.contractHours}h${emp.contractHours && emp.contractHours<35 ? " (temps partiel)" : ""}` : "—";
     return `<tr>
       <td><b>${escapeHtml(emp.name)}</b></td>
       <td>${contractLabel}</td>
@@ -1279,7 +1281,7 @@ function openEmployeeModal(id){
     title.textContent = "Modifier l'équipier";
     document.getElementById("emp-id-field").value = emp.id;
     document.getElementById("emp-name-field").value = emp.name;
-    document.getElementById("emp-contract-type-field").value = emp.contractType || "";
+    document.getElementById("emp-contract-type-field").value = ({temps_plein:"CDI",temps_partiel:"CDI"})[emp.contractType] || emp.contractType || "";
     document.getElementById("emp-contract-hours-field").value = emp.contractHours || "";
     document.getElementById("emp-time-field").value = emp.plannedTime || "";
   } else {
@@ -1307,11 +1309,8 @@ document.getElementById("emp-modal-save").addEventListener("click", async ()=>{
   if(!name){ showToast("Le nom est obligatoire"); return; }
   if(!contractType){ showToast("Le type de contrat est obligatoire"); return; }
   if(!contractHours || contractHours <= 0){ showToast("Les heures contractuelles sont obligatoires"); return; }
-  if(contractType === "temps_partiel" && contractHours >= 35){
-    showToast("Un temps partiel doit être inférieur à 35h/semaine"); return;
-  }
-  if(contractType === "temps_plein" && contractHours > 48){
-    showToast("Un temps plein ne peut pas dépasser 48h/semaine"); return;
+  if(contractHours > 48){
+    showToast("Un contrat ne peut pas dépasser 48h/semaine"); return;
   }
 
   try{

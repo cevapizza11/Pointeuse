@@ -386,7 +386,7 @@ a{color:var(--gold)}
     <button id="activation-btn" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:var(--gold-lo);color:var(--ink);font-weight:700;font-size:16px;cursor:pointer">🔓 Activer</button>
     <div id="activation-err" style="color:var(--red);font-size:13px;min-height:18px;margin-top:10px"></div>
     <button id="activation-oubli" type="button" style="background:none;border:none;color:var(--gold);text-decoration:underline;font-size:13px;cursor:pointer;margin-top:4px">Mot de passe oublié ?</button>
-    <div style="font-size:11px;color:var(--muted);margin-top:14px">Pointeuse · v.01/11/2026 18:55</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:14px">Pointeuse · v.19/11/2026 15:05</div>
   </div>
 </div>
 <div id="app">
@@ -396,7 +396,7 @@ a{color:var(--gold)}
     <div class="topbar">
       <div class="brand">
         <div class="brand-mark">M&S</div>
-        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.01/11/2026 18:55</span></div>
+        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.19/11/2026 15:05</span></div>
       </div>
       <div class="clock" id="home-clock">--:--<span class="date" id="home-date">—</span></div>
       <div class="admin-dot" id="admin-dot-trigger" title=""></div>
@@ -498,7 +498,7 @@ a{color:var(--gold)}
             <li><b>Travail effectif &gt; 10h/jour</b> — durée maximale quotidienne</li>
             <li><b>Repos quotidien &lt; 11h</b> — entre la sortie d'un jour et l'entrée du lendemain</li>
             <li><b>Plafond hebdomadaire &gt; 48h</b> — sur 7 jours glissants</li>
-            <li><b>Heures complémentaires (temps partiel)</b> — au-delà de 10% des heures contractuelles, sur 7 jours glissants</li>
+            <li><b>Heures complémentaires (temps partiel)</b> — pour tout contrat de moins de 35 h/semaine (CDI, CDD, extra…) : au-delà de 10% des heures contractuelles, sur 7 jours glissants</li>
           </ul>
         </div>
         <div class="stat-cards" id="anomalies-stats"></div>
@@ -599,13 +599,18 @@ a{color:var(--gold)}
         <label>Type de contrat</label>
         <select id="emp-contract-type-field">
           <option value="">— Choisir —</option>
-          <option value="temps_plein">Temps plein</option>
-          <option value="temps_partiel">Temps partiel</option>
+          <option value="CDI">CDI</option>
+          <option value="CDD">CDD</option>
+          <option value="Extra">Extra</option>
+          <option value="Saisonnier">Saisonnier</option>
+          <option value="Apprenti">Apprenti</option>
+          <option value="Stage">Stage</option>
         </select>
       </div>
       <div class="field">
         <label>Heures hebdomadaires contractuelles</label>
         <input type="number" id="emp-contract-hours-field" placeholder="Ex : 35" min="1" max="48" step="0.5">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Moins de 35 h = temps partiel (alerte heures complémentaires au-delà de 10 %).</div>
       </div>
       <div class="field">
         <label>Heure d'arrivée prévue (optionnel)</label>
@@ -657,6 +662,6 @@ a{color:var(--gold)}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="app.js?v=20261022a"></script>
+<script src="app.js?v=202611191505"></script>
 </body>
 </html>
