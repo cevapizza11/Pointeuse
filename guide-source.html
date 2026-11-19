@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><title>Guide — Pointeuse Moule & Smile</title>
+<style>
+@page{size:A4;margin:16mm 15mm}
+body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;line-height:1.45;color:#1a1a1a}
+.couv{background:#0d0d0d;color:#f3f0e8;padding:28px;border-radius:10px;border:2px solid #d4a537;margin-bottom:18px}
+.couv h1{color:#d4a537;margin:0 0 6px;font-size:24pt}
+.couv p{margin:3px 0}
+h2{color:#0d0d0d;border-bottom:3px solid #d4a537;padding-bottom:3px;margin:22px 0 8px;font-size:14pt;page-break-after:avoid}
+h3{font-size:11.5pt;margin:12px 0 4px;color:#7a5a12}
+table{border-collapse:collapse;width:100%;margin:6px 0;font-size:9.5pt}
+td,th{border:1px solid #bbb;padding:5px 7px;vertical-align:top;text-align:left}
+th{background:#f4ecd7}
+.enc{background:#fbf5e4;border-left:4px solid #d4a537;padding:8px 12px;margin:8px 0}
+.att{background:#fdecea;border-left:4px solid #c0392b;padding:8px 12px;margin:8px 0}
+code{background:#eee;padding:1px 4px;border-radius:3px}
+ol li,ul li{margin:3px 0}
+.pb{page-break-before:always}
+</style></head><body>
+<div class="couv"><h1>Pointeuse Moule &amp; Smile</h1>
+<p><b>Guide complet : fonctionnement, réglages et règles surveillées</b></p>
+<p>Version de l'appli : __VERSION__ — SAS La Marmite Bleue</p></div>
+
+<h2>1. À quoi sert la Pointeuse</h2>
+<p>Les équipiers pointent leurs arrivées, pauses, reprises et sorties sur la tablette du restaurant, avec un code PIN personnel. Tu contrôles les heures, corriges les oublis, repères les dépassements du Code du travail et exportes les heures du mois pour la paie.</p>
+<table><tr><th>Élément</th><th>Où il se trouve</th></tr>
+<tr><td>Adresse de l'appli</td><td>cevapizza11.github.io/Pointeuse/ (aussi depuis la page Outils, tuile « Pointage »)</td></tr>
+<tr><td>Appareils prévus</td><td>La tablette du restaurant, ton PC et ton téléphone (pas les téléphones des équipiers)</td></tr>
+<tr><td>Données</td><td>Base Firebase « pointagemarmitebleue » : équipiers, pointages, anomalies, réglages</td></tr>
+<tr><td>Liste des équipiers</td><td>Partagée avec <b>Planning &amp; RH</b> et alimentée par l'appli <b>Recrutement</b></td></tr></table>
+
+<h2>2. Activer un appareil (une seule fois)</h2>
+<p>Pour protéger les pointages, la Pointeuse ne s'ouvre que sur un appareil activé. Au premier lancement, l'écran « Activer cette tablette » demande le <b>mot de passe de la Pointeuse</b> (compte tmjumeaux@gmail.com). L'appareil reste activé ensuite.</p>
+<ul><li>Mot de passe oublié : bouton « Mot de passe oublié ? » sur l'écran d'activation ; un lien de réinitialisation arrive sur tmjumeaux@gmail.com.</li>
+<li>Le même mot de passe est demandé une fois par l'appli Recrutement quand elle crée un équipier.</li></ul>
+<div class="enc">Les règles de sécurité de la base n'autorisent que ce compte : sans lui, personne ne peut lire ni modifier les pointages, même en connaissant l'adresse.</div>
+
+<h2>3. Le pointage par l'équipier</h2>
+<ol>
+<li>Sur l'écran d'accueil (horloge en haut), l'équipier <b>touche son nom</b>.</li>
+<li><b>Première fois</b> : il crée son code à 4 chiffres et le confirme. Ensuite, il tape son code à chaque pointage.</li>
+<li>L'appli propose seulement les actions logiques :
+  <table><tr><th>Situation</th><th>Choix proposés</th></tr>
+  <tr><td>Pas encore arrivé (ou sorti)</td><td>Pointer l'arrivée</td></tr>
+  <tr><td>En service</td><td>Partir en pause · Pointer la sortie</td></tr>
+  <tr><td>En pause</td><td>Reprendre le travail · Pointer la sortie</td></tr></table></li>
+<li>Un écran de confirmation affiche l'action et l'heure.</li></ol>
+<p><b>Alerte en direct</b> : si un équipier est en service depuis plus de 5 h sans sortie, un bandeau s'affiche sur l'écran d'accueil (vérifié chaque minute) — souvent un oubli de dépointage.</p>
+
+<h2>4. Accès administration</h2>
+<p>Touche le <b>petit point discret en haut à droite</b> de l'écran d'accueil, puis tape le <b>code admin</b> (4 à 6 chiffres). La toute première fois, le code tapé devient le code admin. Pour le changer : onglet Réglages.</p>
+<table><tr><th style="width:24%">Onglet</th><th>Contenu</th></tr>
+<tr><td><b>Aujourd'hui</b></td><td>Pour chaque équipier : entrée, pause, reprise, sortie et total du jour, en direct.</td></tr>
+<tr><td><b>Contrôle des pointages</b></td><td>Vue jour par jour (flèches pour changer de date). Touche une case pour <b>corriger</b> un pointage, en <b>ajouter</b> un oublié ou le <b>supprimer</b>. Une fenêtre récapitule les anomalies du jour affiché.</td></tr>
+<tr><td><b>Anomalies</b></td><td>Liste des anomalies en attente (équipier, date, type, détail), enregistrées dans la base. « Revérifier (30 derniers jours) » relance la détection, par exemple après des corrections. Une anomalie corrigée disparaît toute seule.</td></tr>
+<tr><td><b>Équipiers</b></td><td>Nom, contrat et heures, PIN défini ou non, heure prévue, statut. « + Ajouter un équipier », modifier, <b>réinitialiser le PIN</b> (l'équipier en recrée un au pointage suivant), retirer un équipier (il est désactivé, ses pointages sont gardés).</td></tr>
+<tr><td><b>Rapports mensuels</b></td><td><b>Résumé</b> : jours travaillés et heures totales par équipier pour le mois choisi. <b>Détail par jour</b> : sur une période libre (du… au…), chaque journée avec entrée, sortie et heures, sous-total par équipier et total équipe. Bouton <b>Exporter CSV</b> (s'ouvre dans Excel, avec accents).</td></tr>
+<tr><td><b>Réglages</b></td><td>Nouveau code admin (4 à 6 chiffres).</td></tr></table>
+
+<h2 class="pb">5. Les équipiers et leur contrat</h2>
+<p>Fiche équipier : <b>prénom et nom</b>, <b>type de contrat</b> (CDI, CDD, Extra, Saisonnier, Apprenti, Stage — la même liste que Planning &amp; RH), <b>heures hebdomadaires</b> (1 à 48 h) et <b>heure d'arrivée prévue</b> (facultative).</p>
+<ul>
+<li><b>Moins de 35 h par semaine = temps partiel</b>, quel que soit le type de contrat. La liste l'indique : « CDD · 20h (temps partiel) ».</li>
+<li>Les anciennes fiches marquées « Temps plein / Temps partiel » s'affichent toujours ; en les modifiant, choisis leur vrai type de contrat avant d'enregistrer.</li>
+<li>La liste est commune avec Planning &amp; RH : un équipier ajouté, modifié ou retiré ici l'est aussi là-bas, et inversement.</li>
+<li>L'appli <b>Recrutement</b> crée directement l'équipier (bouton « Créer dans la Pointeuse et Planning » à l'étape Démarrage) ; il choisit son PIN à son premier pointage.</li></ul>
+
+<h2>6. Règles et seuils surveillés (Code du travail)</h2>
+<table><tr><th style="width:30%">Contrôle</th><th>Quand une anomalie est créée</th></tr>
+<tr><td>Session sans dépointage</td><td>Plus de <b>5 h</b> d'affilée sans pointage de pause ou de sortie : probable oubli (alerte aussi en direct sur l'écran d'accueil).</td></tr>
+<tr><td>Amplitude journalière</td><td>Plus de <b>13 h</b> entre le premier et le dernier pointage de la journée.</td></tr>
+<tr><td>Travail effectif quotidien</td><td>Plus de <b>10 h</b> de travail effectif dans la journée (pauses déduites).</td></tr>
+<tr><td>Repos quotidien</td><td>Moins de <b>11 h</b> entre la sortie d'un jour et l'entrée du lendemain.</td></tr>
+<tr><td>Plafond hebdomadaire</td><td>Plus de <b>48 h</b> sur 7 jours glissants.</td></tr>
+<tr><td>Heures complémentaires (temps partiel)</td><td>Pour tout contrat de <b>moins de 35 h</b> : plus de <b>10 %</b> au-dessus des heures du contrat sur 7 jours glissants.</td></tr></table>
+<p>Ces seuils sont rappelés dans l'onglet Anomalies. Les anomalies sont vérifiées automatiquement sur les 7 derniers jours, et sur 30 jours avec le bouton « Revérifier ».</p>
+<div class="att"><b>Mineurs :</b> la Pointeuse n'applique pas encore de seuils spécifiques aux moins de 18 ans (8 h par jour, 35 h par semaine, 12 h de repos). Pour eux, vérifie ces limites dans le planning.</div>
+
+<h2>7. Fin de mois : préparer la paie</h2>
+<ol><li>Onglet <b>Anomalies</b> : traite toutes les anomalies (corrige les oublis dans « Contrôle des pointages », puis « Revérifier »).</li>
+<li>Onglet <b>Rapports mensuels</b> › choisis le mois › vérifie le Résumé.</li>
+<li>Passe en <b>Détail par jour</b> sur le mois et <b>Exporter CSV</b>.</li>
+<li>Envoie le fichier au comptable (ou dépose-le dans le Drive).</li></ol>
+
+<h2>8. Dépannage</h2>
+<table><tr><th>Problème</th><th>Solution</th></tr>
+<tr><td>Écran « Activer cette tablette »</td><td>Appareil pas encore activé ou déconnecté : tape le mot de passe de la Pointeuse.</td></tr>
+<tr><td>Un équipier a oublié son code</td><td>Admin › Équipiers › réinitialiser le PIN ; il en crée un nouveau au prochain pointage.</td></tr>
+<tr><td>Oubli de pointage</td><td>Admin › Contrôle des pointages › touche la case de la journée concernée › ajoute ou corrige l'heure.</td></tr>
+<tr><td>Code admin oublié</td><td>Il est enregistré dans la base (réglages) : demande à Claude de le réinitialiser.</td></tr>
+<tr><td>Ancienne version affichée</td><td>Vérifie la version en haut (v.JJ/MM/AAAA HH:MM), puis ferme et rouvre la page.</td></tr></table>
+</body></html>
