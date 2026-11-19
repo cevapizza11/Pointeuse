@@ -1702,7 +1702,7 @@ firebase.auth().onAuthStateChanged(user=>{
 // ADMIN — PRÉPARATION DE PAIE (19/11/2026)
 // Récapitulatif mensuel par équipier à reporter dans le TESE (Urssaf) ou à transmettre au comptable.
 // ============================================================
-const PAIE_DEF = { midiDe:"11:00", midiA:"14:30", soirDe:"18:00", soirA:"21:30", presenceMin:30, mg:4.35 };
+const PAIE_DEF = { midiDe:"11:00", midiA:"14:30", soirDe:"18:00", soirA:"21:30", presenceMin:30, mg:4.35, feriesGarantis:6, ancienneteMois:12 };
 let paieCache = [], paieInit = false;
 const ABS_LIB = { CP:"Congés payés", MAL:"Maladie", AT:"Accident du travail", RC:"Repos compensateur", FAM:"Événement familial", FOR:"Formation", CSS:"Congé sans solde", ABI:"Absence injustifiée" };
 
@@ -1726,14 +1726,14 @@ function initPaie(){
     document.getElementById("paie-refresh-btn").addEventListener("click", renderPaie);
     document.getElementById("paie-csv-btn").addEventListener("click", exportPaieCsv);
     document.getElementById("paie-save-btn").addEventListener("click", async ()=>{
-      const p={ midiDe:val("paie-midi-de"), midiA:val("paie-midi-a"), soirDe:val("paie-soir-de"), soirA:val("paie-soir-a"), presenceMin:Number(val("paie-presence"))||30, mg:Number(val("paie-mg"))||PAIE_DEF.mg };
+      const p={ midiDe:val("paie-midi-de"), midiA:val("paie-midi-a"), soirDe:val("paie-soir-de"), soirA:val("paie-soir-a"), presenceMin:Number(val("paie-presence"))||30, mg:Number(val("paie-mg"))||PAIE_DEF.mg, feriesGarantis:Number(val("paie-fg"))||6, ancienneteMois:Number(val("paie-anc"))||12 };
       await db.collection("settings").doc("general").set({ paie:p }, {merge:true});
       state.settings.paie=p; showToast("Réglages de paie enregistrés ✓"); renderPaie();
     });
     paieInit=true;
   }
   const c=paieCfg();
-  [["paie-midi-de",c.midiDe],["paie-midi-a",c.midiA],["paie-soir-de",c.soirDe],["paie-soir-a",c.soirA],["paie-presence",c.presenceMin],["paie-mg",c.mg]].forEach(([id,v])=>document.getElementById(id).value=v);
+  [["paie-midi-de",c.midiDe],["paie-midi-a",c.midiA],["paie-soir-de",c.soirDe],["paie-soir-a",c.soirA],["paie-presence",c.presenceMin],["paie-mg",c.mg],["paie-fg",c.feriesGarantis],["paie-anc",c.ancienneteMois]].forEach(([id,v])=>document.getElementById(id).value=v);
   renderPaie();
 }
 function val(id){ return document.getElementById(id).value; }
@@ -1745,7 +1745,10 @@ function reglesPaie(){
     `<b>Heures supplémentaires</b> (contrat de 35 h ou plus, et extras) : calculées par <b>semaine civile</b> (lundi → dimanche) au-delà de 35 h : <b>+10 %</b> de la 36e à la 39e heure, <b>+20 %</b> de la 40e à la 43e, <b>+50 %</b> au-delà. Une semaine à cheval sur deux mois est comptée dans le mois où tombe son dimanche.`,
     `<b>Heures complémentaires</b> (contrat de moins de 35 h) : heures de la semaine au-delà du contrat : <b>+10 %</b> jusqu'au dixième des heures du contrat ; au-delà, colonne « au-delà » (majoration à vérifier, normalement +25 %, et alerte de la Pointeuse).`,
     `<b>Repas</b> : 1 repas compté si l'équipier est en service au moins <b>${c.presenceMin} min</b> pendant la plage du midi (${c.midiDe}–${c.midiA}) ou du soir (${c.soirDe}–${c.soirA}) ; 2 repas maximum par jour. Avantage en nature = repas × <b>${String(c.mg).replace(".",",")} €</b> (minimum garanti, à mettre à jour à chaque revalorisation).`,
-    `<b>Dimanches et jours fériés</b> travaillés : comptés pour information (fériés : 1er janvier, lundi de Pâques, 1er et 8 mai, Ascension, lundi de Pentecôte, 14 juillet, 15 août, 1er et 11 novembre, 25 décembre).`,
+    `<b>Dimanche</b> : jour de travail normal en restauration, sans majoration obligatoire (compté pour information).`,
+    `<b>1er mai</b> : seul férié obligatoirement chômé ; s'il est travaillé, les heures sont <b>payées double</b> (+100 %), pour tous les salariés, sans condition d'ancienneté — alerte rouge dans le tableau.`,
+    `<b>Autres jours fériés</b> (1er janvier, lundi de Pâques, 8 mai, Ascension, lundi de Pentecôte, 14 juillet, 15 août, 1er et 11 novembre, 25 décembre) : travaillés, ils sont payés comme une journée normale.`,
+    `<b>Fériés garantis (HCR)</b> : après <b>${c.ancienneteMois} mois</b> d'ancienneté (date de début de contrat de Planning &amp; RH), <b>${c.feriesGarantis} fériés garantis</b> par an (hors 1er mai), à donner en repos payé, ou à compenser (jour de repos en plus ou indemnité) s'ils sont travaillés ; un férié tombé pendant des congés ou une absence est reporté. Compteur annuel sous le tableau : « reste dû » = garantis − pris. Pour un établissement saisonnier ou un saisonnier : ancienneté de 9 mois et droits au prorata du contrat — à régler avec Exco.`,
     `<b>Absences</b> : reprises de Planning &amp; RH (congés payés en jours ouvrables, autres absences en jours calendaires).`,
     `<b>Contrôles</b> : un pointage d'entrée sans sortie n'est pas compté et est signalé en haut du tableau — corrige-le dans « Contrôle des pointages ».`,
     `<b>CDI annualisé</b> : les heures supplémentaires se décomptent en fin de période annuelle ; les colonnes HS sont alors indicatives.`
@@ -1795,6 +1798,7 @@ async function renderPaie(){
       r.jours++; r.msMois+=ms; r.repas+=rep;
       if(j.getDay()===0) r.dim++;
       if(feries.has(k)) r.fer.push(k.slice(8)+"/"+k.slice(5,7));
+      if(k.slice(5)==="05-01") r.mai1=(r.mai1||0)+ms;
       r.detail.push({k, ms, rep, entree:fmtTime(sess[0][0]), sortie:fmtTime(sess[sess.length-1][1])});
     });
     Object.entries(semaines).forEach(([kDim,ms])=>{
@@ -1815,12 +1819,13 @@ async function renderPaie(){
   tbody.innerHTML = paieCache.length ? paieCache.map((r,i)=>`<tr>
     <td><b>${escapeHtml(r.name)}</b></td><td>${escapeHtml(r.contrat)}</td><td>${r.jours}</td><td><b>${fmtH(r.msMois)}</b><br><small>${dec(r.msMois)} h</small></td>
     <td>${h(r.hs10)}</td><td>${h(r.hs20)}</td><td>${h(r.hs50)}</td><td>${h(r.hc10)}</td><td style="${r.hcPlus>0?"color:var(--danger);font-weight:700":""}">${h(r.hcPlus)}</td>
-    <td>${r.repas}</td><td>${(r.repas*c.mg).toFixed(2).replace(".",",")} €</td><td>${r.dim} dim.${r.fer.length?"<br>"+r.fer.length+" férié(s) : "+r.fer.join(", "):""}</td>
+    <td>${r.repas}</td><td>${(r.repas*c.mg).toFixed(2).replace(".",",")} €</td><td>${r.dim} dim.${r.fer.length?"<br>"+r.fer.length+" férié(s) : "+r.fer.join(", "):""}${r.mai1?`<br><b style="color:var(--danger)">1er mai travaillé : ${fmtH(r.mai1)} à payer double</b>`:""}</td>
     <td>${Object.entries(r.abs).map(([t,n])=>`${ABS_LIB[t]||t} : ${n} j`).join("<br>")||"—"}</td>
     <td><button class="btn btn-ghost btn-sm" data-paie="${i}">Détail</button></td></tr>`).join("")
     : `<tr><td colspan="14" style="text-align:center;padding:30px;">Aucun pointage ce mois-ci.</td></tr>`;
   tbody.querySelectorAll("[data-paie]").forEach(b=>b.addEventListener("click",()=>detailPaie(paieCache[b.dataset.paie])));
   document.getElementById("paie-detail").innerHTML="";
+  compteurFeries(an, emps, absences);
 }
 function detailPaie(r){
   document.getElementById("paie-detail").innerHTML=`<div style="margin-top:16px"><div class="admin-h" style="font-size:18px">${escapeHtml(r.name)} — détail des jours</div>
@@ -1832,7 +1837,50 @@ function detailPaie(r){
 function exportPaieCsv(){
   if(!paieCache.length){ showToast("Rien à exporter"); return; }
   const c=paieCfg(), n=v=>String(Math.round(v*100)/100).replace(".",",");
-  let csv="Équipier;Contrat;Jours travaillés;Heures du mois;HS +10%;HS +20%;HS +50%;H. compl. +10%;H. compl. au-delà;Repas;Avantage repas (€);Dimanches;Jours fériés travaillés;Absences\n";
-  paieCache.forEach(r=>{ csv+=[r.name,r.contrat,r.jours,dec(r.msMois),n(r.hs10),n(r.hs20),n(r.hs50),n(r.hc10),n(r.hcPlus),r.repas,(r.repas*c.mg).toFixed(2).replace(".",","),r.dim,r.fer.join(" "),Object.entries(r.abs).map(([t,x])=>`${ABS_LIB[t]||t} ${x} j`).join(" / ")].join(";")+"\n"; });
+  let csv="Équipier;Contrat;Jours travaillés;Heures du mois;HS +10%;HS +20%;HS +50%;H. compl. +10%;H. compl. au-delà;Repas;Avantage repas (€);Dimanches;Jours fériés travaillés;1er mai (h payées double);Absences\n";
+  paieCache.forEach(r=>{ csv+=[r.name,r.contrat,r.jours,dec(r.msMois),n(r.hs10),n(r.hs20),n(r.hs50),n(r.hc10),n(r.hcPlus),r.repas,(r.repas*c.mg).toFixed(2).replace(".",","),r.dim,r.fer.join(" "),r.mai1?dec(r.mai1):"",Object.entries(r.abs).map(([t,x])=>`${ABS_LIB[t]||t} ${x} j`).join(" / ")].join(";")+"\n"; });
   exportCsv(csv, `preparation_paie_${val("paie-month")}.csv`);
+}
+
+
+// ---------- Compteur annuel des jours fériés garantis (HCR) ----------
+const FERIE_NOM={"01-01":"1er janvier","05-01":"1er mai","05-08":"8 mai","07-14":"14 juillet","08-15":"15 août","11-01":"1er novembre","11-11":"11 novembre","12-25":"25 décembre"};
+function nomFerie(k,an){
+  if(FERIE_NOM[k.slice(5)]) return FERIE_NOM[k.slice(5)];
+  const l=[...joursFeries(an)].filter(x=>!FERIE_NOM[x.slice(5)]).sort(); return ["Lundi de Pâques","Ascension","Lundi de Pentecôte"][l.indexOf(k)]||"Férié";
+}
+async function compteurFeries(an, emps, absences){
+  const c=paieCfg(), zone=document.getElementById("paie-feries");
+  zone.innerHTML="Calcul du compteur…";
+  const jours=[...joursFeries(an)].filter(k=>k.slice(5)!=="05-01").sort();
+  const aujourd=dateKey(new Date());
+  const travaille={}; // k -> Set(empId)
+  for(const k of jours){
+    if(k>aujourd) continue;
+    const d=new Date(k+"T00:00:00"), f=new Date(k+"T23:59:59");
+    try{ (await fetchPunchesBetween(d,f)).forEach(p=>{ (travaille[k]=travaille[k]||new Set()).add(p.employeeId); }); }catch(e){}
+  }
+  const lignes=[];
+  Object.values(emps).forEach(e=>{
+    if(e.active===false) return;
+    const debut=e.contractStart&&e.contractStart.toDate?e.contractStart.toDate():(e.createdAt&&e.createdAt.toDate?e.createdAt.toDate():null);
+    if(!debut) return;
+    const ouvre=new Date(debut); ouvre.setMonth(ouvre.getMonth()+c.ancienneteMois); const kOuvre=dateKey(ouvre);
+    const res={pris:[],trav:[],rep:[],avenir:[]};
+    jours.forEach(k=>{
+      if(k<kOuvre) return;
+      const nom=nomFerie(k,an)+" ("+k.slice(8)+"/"+k.slice(5,7)+")";
+      if(k>aujourd){ res.avenir.push(nom); return; }
+      if(travaille[k]&&travaille[k].has(e.id)) res.trav.push(nom);
+      else if(absences.some(x=>x.empId===e.id&&x.start<=k&&x.end>=k)) res.rep.push(nom);
+      else res.pris.push(nom);
+    });
+    if(!res.pris.length&&!res.trav.length&&!res.rep.length&&!res.avenir.length) return;
+    lignes.push({name:e.name,depuis:kOuvre,...res,du:Math.max(0,c.feriesGarantis-res.pris.length)});
+  });
+  zone.innerHTML=`<div class="admin-h" style="font-size:18px;margin-top:22px">Jours fériés garantis ${an} (hors 1er mai)</div>
+  <p style="font-size:13px;margin:4px 0 10px">Équipiers ayant ${c.ancienneteMois} mois d'ancienneté : ${c.feriesGarantis} fériés garantis par an. « Pris » = férié non travaillé et payé ; « travaillé » = à compenser (repos en plus ou indemnité) ; « reporté » = tombé pendant des congés ou une absence. Fais le point au 31 décembre (ou à la fin d'un contrat saisonnier) : le reste dû se donne en repos ou se paie.</p>
+  ${lignes.length?`<table><thead><tr><th>Équipier</th><th>Droit depuis</th><th>Pris</th><th>Travaillés (à compenser)</th><th>Reportés</th><th>À venir</th><th>Reste dû</th></tr></thead><tbody>
+  ${lignes.map(l=>`<tr><td><b>${escapeHtml(l.name)}</b></td><td>${l.depuis.split("-").reverse().join("/")}</td><td>${l.pris.length}<br><small>${l.pris.join(", ")}</small></td><td style="${l.trav.length?"color:var(--danger);font-weight:700":""}">${l.trav.length}<br><small>${l.trav.join(", ")}</small></td><td>${l.rep.length}<br><small>${l.rep.join(", ")}</small></td><td>${l.avenir.length}</td><td><b>${l.du}</b></td></tr>`).join("")}</tbody></table>`
+  :`<p style="font-size:13px">Aucun équipier n'a encore ${c.ancienneteMois} mois d'ancienneté cette année (date de début de contrat renseignée dans Planning &amp; RH).</p>`}`;
 }
