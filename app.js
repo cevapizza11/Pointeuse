@@ -542,7 +542,7 @@ async function renderControlTable(){
   document.getElementById("control-date-label").textContent = fmtControlDateLabel(controlDate);
   document.getElementById("control-today-btn").style.visibility = isSameDay(controlDate, new Date()) ? "hidden" : "visible";
 
-  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:rgba(30,38,36,0.4);">Chargement…</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:rgba(30,38,36,0.4);">Chargement…</td></tr>`;
 
   const start = new Date(controlDate); start.setHours(0,0,0,0);
   const end = new Date(controlDate); end.setHours(23,59,59,999);
@@ -556,7 +556,7 @@ async function renderControlTable(){
       .get({source: "server"});
   }catch(e){
     console.error(e);
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--danger);">Erreur de chargement</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--danger);">Erreur de chargement</td></tr>`;
     return;
   }
 
@@ -640,7 +640,7 @@ async function renderControlTable(){
   controlCache = rows;
 
   if(rows.length === 0){
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:rgba(30,38,36,0.4);">Aucun pointage ce jour-là</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:rgba(30,38,36,0.4);">Aucun pointage ce jour-là</td></tr>`;
   } else {
     // Regrouper les sessions (rows) par équipier pour n'afficher qu'une seule ligne par personne
     const byEmpDisplay = {};
@@ -886,13 +886,32 @@ function renderHomeGrid(){
     const statusClass = status==="in" ? "status-in" : status==="pause" ? "status-pause" : "status-out";
     return `
       <div class="emp-card" data-id="${emp.id}">
-        <div class="emp-avatar">${initials(emp.name)}</div>
+        <div class="emp-avatar">${avatarHtml(emp)}</div>
         <div class="emp-name">${escapeHtml(emp.name)}</div>
         <div class="emp-status ${statusClass}">${statusLabel}</div>
       </div>`;
   }).join("");
   grid.querySelectorAll(".emp-card").forEach(card=>{
     card.addEventListener("click", ()=>openPinScreen(card.dataset.id));
+  });
+}
+
+// Photo de l'équipier (vignette data:image enregistrée dans sa fiche) ou initiales — 19/11/2026
+function avatarHtml(emp){
+  if(emp && typeof emp.photo==="string" && emp.photo.startsWith("data:image/")) return `<img src="${emp.photo}" alt="">`;
+  return initials(emp ? emp.name : "");
+}
+// Réduit une photo en vignette carrée 240 px (JPEG) pour rester léger dans la base
+function photoVignette(file){
+  return new Promise((ok,ko)=>{
+    const img=new Image(), u=URL.createObjectURL(file);
+    img.onload=()=>{
+      const t=240, c=document.createElement("canvas"); c.width=t; c.height=t;
+      const s=Math.min(img.naturalWidth,img.naturalHeight), sx=(img.naturalWidth-s)/2, sy=(img.naturalHeight-s)/2.4;
+      const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,t,t); x.drawImage(img,sx,Math.max(0,sy),s,s,0,0,t,t);
+      URL.revokeObjectURL(u); ok(c.toDataURL("image/jpeg",0.8));
+    };
+    img.onerror=ko; img.src=u;
   });
 }
 
@@ -927,7 +946,7 @@ function openPinScreen(employeeId){
   state.pinFirstEntry = "";
   state.pinMode = emp.pinHash ? "check" : "create";
 
-  document.getElementById("pin-avatar").textContent = initials(emp.name);
+  document.getElementById("pin-avatar").innerHTML = avatarHtml(emp);
   document.getElementById("pin-name").textContent = emp.name;
   document.getElementById("pin-msg").textContent = "";
 
@@ -1225,7 +1244,7 @@ document.getElementById("refresh-today-btn").addEventListener("click", renderTod
 function renderEmployeesTable(){
   const tbody = document.getElementById("employees-table-body");
   if(state.employees.length === 0){
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:rgba(30,38,36,0.4);padding:30px;">Aucun équipier. Cliquez sur "+ Ajouter".</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:rgba(30,38,36,0.4);padding:30px;">Aucun équipier. Cliquez sur "+ Ajouter".</td></tr>`;
     return;
   }
   // Même liste que Planning & RH (anciens libellés gardés pour les fiches existantes)
@@ -1237,6 +1256,7 @@ function renderEmployeesTable(){
       : `<span class="pill pill-out">Hors service</span>`;
     const contractLabel = emp.contractType ? `${CONTRACT_LABELS[emp.contractType]||emp.contractType} · ${emp.contractHours}h${emp.contractHours && emp.contractHours<35 ? " (temps partiel)" : ""}` : "—";
     return `<tr>
+      <td><div class="emp-avatar mini">${avatarHtml(emp)}</div></td>
       <td><b>${escapeHtml(emp.name)}</b></td>
       <td>${contractLabel}</td>
       <td>${emp.pinHash ? "✅ Oui" : "— Pas encore"}</td>
@@ -1284,6 +1304,7 @@ function openEmployeeModal(id){
     document.getElementById("emp-contract-type-field").value = ({temps_plein:"CDI",temps_partiel:"CDI"})[emp.contractType] || emp.contractType || "";
     document.getElementById("emp-contract-hours-field").value = emp.contractHours || "";
     document.getElementById("emp-time-field").value = emp.plannedTime || "";
+    photoModal = emp.photo || null;
   } else {
     title.textContent = "Ajouter un équipier";
     document.getElementById("emp-id-field").value = "";
@@ -1291,9 +1312,24 @@ function openEmployeeModal(id){
     document.getElementById("emp-contract-type-field").value = "";
     document.getElementById("emp-contract-hours-field").value = "";
     document.getElementById("emp-time-field").value = "";
+    photoModal = null;
   }
+  photoModifiee = false;
+  afficherPhotoModal();
   modal.classList.add("show");
 }
+let photoModal = null, photoModifiee = false;
+function afficherPhotoModal(){
+  document.getElementById("emp-photo-preview").innerHTML = photoModal ? `<img src="${photoModal}" alt="">` : "—";
+  document.getElementById("emp-photo-remove").style.display = photoModal ? "inline-block" : "none";
+}
+document.getElementById("emp-photo-field").addEventListener("change", async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  try{ photoModal = await photoVignette(f); photoModifiee = true; afficherPhotoModal(); }
+  catch(err){ showToast("Photo illisible"); }
+  e.target.value = "";
+});
+document.getElementById("emp-photo-remove").addEventListener("click", ()=>{ photoModal = null; photoModifiee = true; afficherPhotoModal(); });
 function closeEmployeeModal(){
   document.getElementById("employee-modal").classList.remove("show");
 }
@@ -1315,11 +1351,11 @@ document.getElementById("emp-modal-save").addEventListener("click", async ()=>{
 
   try{
     if(id){
-      await db.collection("employees").doc(id).update({ name, contractType, contractHours, plannedTime });
+      await db.collection("employees").doc(id).update({ name, contractType, contractHours, plannedTime, ...(photoModifiee ? { photo: photoModal || firebase.firestore.FieldValue.delete() } : {}) });
       showToast("Équipier modifié ✓");
     } else {
       await db.collection("employees").add({
-        name, contractType, contractHours, plannedTime, active:true, pinHash:null,
+        name, contractType, contractHours, plannedTime, active:true, pinHash:null, ...(photoModal ? { photo: photoModal } : {}),
         createdAt: firebase.firestore.Timestamp.now()
       });
       showToast("Équipier ajouté ✓");
