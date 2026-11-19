@@ -901,14 +901,14 @@ function avatarHtml(emp){
   if(emp && typeof emp.photo==="string" && emp.photo.startsWith("data:image/")) return `<img src="${emp.photo}" alt="">`;
   return initials(emp ? emp.name : "");
 }
-// Réduit une photo en vignette carrée 240 px (JPEG) pour rester léger dans la base
+// Réduit la photo (entière, sans recadrage) à 360 px maximum en JPEG pour rester léger dans la base
 function photoVignette(file){
   return new Promise((ok,ko)=>{
     const img=new Image(), u=URL.createObjectURL(file);
     img.onload=()=>{
-      const t=240, c=document.createElement("canvas"); c.width=t; c.height=t;
-      const s=Math.min(img.naturalWidth,img.naturalHeight), sx=(img.naturalWidth-s)/2, sy=(img.naturalHeight-s)/2.4;
-      const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,t,t); x.drawImage(img,sx,Math.max(0,sy),s,s,0,0,t,t);
+      const k=Math.min(1,360/Math.max(img.naturalWidth,img.naturalHeight)), w=Math.round(img.naturalWidth*k), h=Math.round(img.naturalHeight*k);
+      const c=document.createElement("canvas"); c.width=w; c.height=h;
+      const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,w,h); x.drawImage(img,0,0,w,h);
       URL.revokeObjectURL(u); ok(c.toDataURL("image/jpeg",0.8));
     };
     img.onerror=ko; img.src=u;

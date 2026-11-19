@@ -142,7 +142,7 @@
     flex-shrink:0;
   }
   .emp-avatar,.pin-avatar{overflow:hidden;}
-  .emp-avatar img,.pin-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+  .emp-avatar img,.pin-avatar img{width:100%;height:100%;object-fit:contain;background:#222;display:block;}
   .emp-avatar.mini{width:38px;height:38px;font-size:14px;}
   .emp-name{font-weight:600;font-size:15px;text-align:center;line-height:1.25;}
   .emp-status{
@@ -389,7 +389,7 @@ a{color:var(--gold)}
     <button id="activation-btn" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:var(--gold-lo);color:var(--ink);font-weight:700;font-size:16px;cursor:pointer">🔓 Activer</button>
     <div id="activation-err" style="color:var(--red);font-size:13px;min-height:18px;margin-top:10px"></div>
     <button id="activation-oubli" type="button" style="background:none;border:none;color:var(--gold);text-decoration:underline;font-size:13px;cursor:pointer;margin-top:4px">Mot de passe oublié ?</button>
-    <div style="font-size:11px;color:var(--muted);margin-top:14px">Pointeuse · v.19/11/2026 15:33</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:14px">Pointeuse · v.19/11/2026 16:20</div>
   </div>
 </div>
 <div id="app">
@@ -399,7 +399,7 @@ a{color:var(--gold)}
     <div class="topbar">
       <div class="brand">
         <div class="brand-mark">M&S</div>
-        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.19/11/2026 15:33</span></div>
+        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.19/11/2026 16:20</span></div>
       </div>
       <div class="clock" id="home-clock">--:--<span class="date" id="home-date">—</span></div>
       <div class="admin-dot" id="admin-dot-trigger" title=""></div>
@@ -673,6 +673,6 @@ a{color:var(--gold)}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="app.js?v=202611191533"></script>
+<script src="app.js?v=202611191620"></script>
 </body>
 </html>
