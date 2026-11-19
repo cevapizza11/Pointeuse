@@ -55,6 +55,7 @@ ol li,ul li{margin:3px 0}
 <tr><td><b>Anomalies</b></td><td>Liste des anomalies en attente (équipier, date, type, détail), enregistrées dans la base. « Revérifier (30 derniers jours) » relance la détection, par exemple après des corrections. Une anomalie corrigée disparaît toute seule.</td></tr>
 <tr><td><b>Équipiers</b></td><td>Nom, contrat et heures, PIN défini ou non, heure prévue, statut. « + Ajouter un équipier », modifier, <b>réinitialiser le PIN</b> (l'équipier en recrée un au pointage suivant), retirer un équipier (il est désactivé, ses pointages sont gardés).</td></tr>
 <tr><td><b>Rapports mensuels</b></td><td><b>Résumé</b> : jours travaillés et heures totales par équipier pour le mois choisi. <b>Détail par jour</b> : sur une période libre (du… au…), chaque journée avec entrée, sortie et heures, sous-total par équipier et total équipe. Bouton <b>Exporter CSV</b> (s'ouvre dans Excel, avec accents).</td></tr>
+<tr><td><b>Préparation de paie</b></td><td>Récapitulatif du mois par équipier, à reporter dans le TESE (Urssaf) ou à envoyer au comptable : voir § 7.</td></tr>
 <tr><td><b>Réglages</b></td><td>Nouveau code admin (4 à 6 chiffres).</td></tr></table>
 
 <h2 class="pb">5. Les équipiers et leur contrat</h2>
@@ -77,12 +78,19 @@ ol li,ul li{margin:3px 0}
 <p>Ces seuils sont rappelés dans l'onglet Anomalies. Les anomalies sont vérifiées automatiquement sur les 7 derniers jours, et sur 30 jours avec le bouton « Revérifier ».</p>
 <div class="att"><b>Mineurs :</b> la Pointeuse n'applique pas encore de seuils spécifiques aux moins de 18 ans (8 h par jour, 35 h par semaine, 12 h de repos). Pour eux, vérifie ces limites dans le planning.</div>
 
-<h2>7. Fin de mois : préparer la paie</h2>
-<ol><li>Onglet <b>Anomalies</b> : traite toutes les anomalies (corrige les oublis dans « Contrôle des pointages », puis « Revérifier »).</li>
-<li>Onglet <b>Rapports mensuels</b> › choisis le mois › vérifie le Résumé.</li>
-<li>Passe en <b>Détail par jour</b> sur le mois et <b>Exporter CSV</b>.</li>
-<li>Envoie le fichier au comptable (ou dépose-le dans le Drive).</li></ol>
-
+<h2 class="pb">7. Fin de mois : préparer la paie</h2>
+<p>Onglet <b>Préparation de paie</b> : choisis le mois, l'appli calcule pour chaque équipier tout ce qu'il faut saisir dans le TESE de l'Urssaf (ou transmettre au comptable).</p>
+<table><tr><th style="width:26%">Colonne</th><th>Ce qu'elle contient</th></tr>
+<tr><td>Jours / Heures du mois</td><td>Jours travaillés et temps de travail effectif pointé (pauses déduites), en heures et minutes et en heures décimales (ex. 47,50 h).</td></tr>
+<tr><td>HS +10 % / +20 % / +50 %</td><td>Contrat de 35 h ou plus, et extras : heures supplémentaires par <b>semaine civile</b> (lundi → dimanche) au-delà de 35 h : 36e à 39e heure +10 %, 40e à 43e +20 %, 44e et plus +50 %. Une semaine à cheval sur deux mois compte dans le mois de son dimanche.</td></tr>
+<tr><td>H. compl. +10 % / au-delà</td><td>Contrat de moins de 35 h : heures de la semaine au-delà du contrat ; +10 % jusqu'au dixième du contrat ; « au-delà » en rouge (majoration à vérifier, normalement +25 %).</td></tr>
+<tr><td>Repas / Avantage repas</td><td>1 repas si l'équipier est en service au moins 30 min dans la plage du midi (11:00–14:30) ou du soir (18:00–21:30), 2 maximum par jour ; avantage en nature = repas × minimum garanti (4,35 € depuis le 1er juin 2026). Plages, durée et valeur se règlent en bas de l'onglet.</td></tr>
+<tr><td>Dim. / fériés</td><td>Dimanches et jours fériés travaillés, pour information.</td></tr>
+<tr><td>Absences</td><td>Reprises de Planning &amp; RH : congés payés en jours ouvrables, autres absences en jours calendaires.</td></tr></table>
+<ol><li>Traite d'abord les <b>anomalies</b> et les journées signalées « entrée sans sortie » (bandeau rouge) dans « Contrôle des pointages ».</li>
+<li>Onglet <b>Préparation de paie</b> › le mois › vérifie les lignes (bouton « Détail » pour voir chaque jour).</li>
+<li><b>Exporter CSV</b> (s'ouvre dans Excel) et reporte les chiffres dans le TESE, ou envoie le fichier au comptable.</li></ol>
+<div class="enc"><b>CDI annualisé :</b> les heures supplémentaires se calculent en fin de période annuelle ; pour eux, les colonnes HS du mois sont seulement indicatives.</div>
 <h2>8. Dépannage</h2>
 <table><tr><th>Problème</th><th>Solution</th></tr>
 <tr><td>Écran « Activer cette tablette »</td><td>Appareil pas encore activé ou déconnecté : tape le mot de passe de la Pointeuse.</td></tr>

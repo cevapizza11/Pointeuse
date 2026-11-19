@@ -1188,6 +1188,7 @@ document.querySelectorAll(".admin-tab").forEach(tab=>{
     if(tab.dataset.tab === "reports"){ renderReportTable(); renderReportDetailTable(); }
     if(tab.dataset.tab === "control") renderControlTable();
     if(tab.dataset.tab === "anomalies") renderAnomaliesTab();
+    if(tab.dataset.tab === "paie") initPaie();
   });
 });
 
@@ -1695,3 +1696,143 @@ firebase.auth().onAuthStateChanged(user=>{
   afficherActivation(!autorise);
   if(autorise && !pointeuseDemarree){ pointeuseDemarree = true; init(); }
 });
+
+
+// ============================================================
+// ADMIN — PRÉPARATION DE PAIE (19/11/2026)
+// Récapitulatif mensuel par équipier à reporter dans le TESE (Urssaf) ou à transmettre au comptable.
+// ============================================================
+const PAIE_DEF = { midiDe:"11:00", midiA:"14:30", soirDe:"18:00", soirA:"21:30", presenceMin:30, mg:4.35 };
+let paieCache = [], paieInit = false;
+const ABS_LIB = { CP:"Congés payés", MAL:"Maladie", AT:"Accident du travail", RC:"Repos compensateur", FAM:"Événement familial", FOR:"Formation", CSS:"Congé sans solde", ABI:"Absence injustifiée" };
+
+function paieCfg(){ return { ...PAIE_DEF, ...(state.settings.paie || {}) }; }
+function hm2min(v){ const [h,m]=String(v||"0:0").split(":").map(Number); return h*60+(m||0); }
+function fmtH(ms){ const min=Math.round(ms/60000); return min ? `${Math.floor(min/60)}h${pad(min%60)}` : "—"; }
+function dec(ms){ return (Math.round(ms/36000)/100).toFixed(2).replace(".",","); }
+function dateKey(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function joursFeries(an){
+  const a=an%19,b=Math.floor(an/100),c=an%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451);
+  const mois=Math.floor((h+l-7*m+114)/31), jour=((h+l-7*m+114)%31)+1, paques=new Date(an,mois-1,jour);
+  const plus=n=>{const x=new Date(paques);x.setDate(x.getDate()+n);return dateKey(x);};
+  return new Set([`${an}-01-01`,plus(1),`${an}-05-01`,`${an}-05-08`,plus(39),plus(50),`${an}-07-14`,`${an}-08-15`,`${an}-11-01`,`${an}-11-11`,`${an}-12-25`]);
+}
+
+function initPaie(){
+  if(!paieInit){
+    const sel=document.getElementById("paie-month"), now=new Date();
+    for(let i=0;i<14;i++){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); const o=document.createElement("option"); o.value=d.getFullYear()+"-"+pad(d.getMonth()+1); o.textContent=d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"}); sel.appendChild(o); }
+    sel.addEventListener("change", renderPaie);
+    document.getElementById("paie-refresh-btn").addEventListener("click", renderPaie);
+    document.getElementById("paie-csv-btn").addEventListener("click", exportPaieCsv);
+    document.getElementById("paie-save-btn").addEventListener("click", async ()=>{
+      const p={ midiDe:val("paie-midi-de"), midiA:val("paie-midi-a"), soirDe:val("paie-soir-de"), soirA:val("paie-soir-a"), presenceMin:Number(val("paie-presence"))||30, mg:Number(val("paie-mg"))||PAIE_DEF.mg };
+      await db.collection("settings").doc("general").set({ paie:p }, {merge:true});
+      state.settings.paie=p; showToast("Réglages de paie enregistrés ✓"); renderPaie();
+    });
+    paieInit=true;
+  }
+  const c=paieCfg();
+  [["paie-midi-de",c.midiDe],["paie-midi-a",c.midiA],["paie-soir-de",c.soirDe],["paie-soir-a",c.soirA],["paie-presence",c.presenceMin],["paie-mg",c.mg]].forEach(([id,v])=>document.getElementById(id).value=v);
+  renderPaie();
+}
+function val(id){ return document.getElementById(id).value; }
+
+function reglesPaie(){
+  const c=paieCfg();
+  document.getElementById("paie-regles").innerHTML=[
+    `<b>Heures du mois</b> : temps de travail effectif pointé (pauses déduites) sur les jours du mois.`,
+    `<b>Heures supplémentaires</b> (contrat de 35 h ou plus, et extras) : calculées par <b>semaine civile</b> (lundi → dimanche) au-delà de 35 h : <b>+10 %</b> de la 36e à la 39e heure, <b>+20 %</b> de la 40e à la 43e, <b>+50 %</b> au-delà. Une semaine à cheval sur deux mois est comptée dans le mois où tombe son dimanche.`,
+    `<b>Heures complémentaires</b> (contrat de moins de 35 h) : heures de la semaine au-delà du contrat : <b>+10 %</b> jusqu'au dixième des heures du contrat ; au-delà, colonne « au-delà » (majoration à vérifier, normalement +25 %, et alerte de la Pointeuse).`,
+    `<b>Repas</b> : 1 repas compté si l'équipier est en service au moins <b>${c.presenceMin} min</b> pendant la plage du midi (${c.midiDe}–${c.midiA}) ou du soir (${c.soirDe}–${c.soirA}) ; 2 repas maximum par jour. Avantage en nature = repas × <b>${String(c.mg).replace(".",",")} €</b> (minimum garanti, à mettre à jour à chaque revalorisation).`,
+    `<b>Dimanches et jours fériés</b> travaillés : comptés pour information (fériés : 1er janvier, lundi de Pâques, 1er et 8 mai, Ascension, lundi de Pentecôte, 14 juillet, 15 août, 1er et 11 novembre, 25 décembre).`,
+    `<b>Absences</b> : reprises de Planning &amp; RH (congés payés en jours ouvrables, autres absences en jours calendaires).`,
+    `<b>Contrôles</b> : un pointage d'entrée sans sortie n'est pas compté et est signalé en haut du tableau — corrige-le dans « Contrôle des pointages ».`,
+    `<b>CDI annualisé</b> : les heures supplémentaires se décomptent en fin de période annuelle ; les colonnes HS sont alors indicatives.`
+  ].map(t=>`<li>${t}</li>`).join("");
+}
+
+async function renderPaie(){
+  reglesPaie();
+  const tbody=document.getElementById("paie-table-body");
+  const [an,mo]=val("paie-month").split("-").map(Number);
+  const debMois=new Date(an,mo-1,1), finMois=new Date(an,mo,1);
+  const debLun=new Date(debMois); debLun.setDate(debLun.getDate()-((debLun.getDay()+6)%7));
+  const finDim=new Date(finMois); finDim.setDate(finDim.getDate()-1); finDim.setDate(finDim.getDate()+(7-finDim.getDay())%7); finDim.setHours(23,59,59,999);
+  tbody.innerHTML=`<tr><td colspan="14" style="text-align:center;padding:30px;">Calcul…</td></tr>`;
+  let punches=[], absences=[];
+  try{
+    punches=await fetchPunchesBetween(debLun, finDim);
+    try{ absences=(await db.collection("absences").get()).docs.map(d=>({id:d.id,...d.data()})); }catch(e){ console.warn("absences",e); }
+  }catch(e){ tbody.innerHTML=`<tr><td colspan="14" style="color:var(--danger);text-align:center;padding:30px;">Erreur de chargement</td></tr>`; return; }
+
+  const c=paieCfg(), feries=new Set([...joursFeries(an-1),...joursFeries(an),...joursFeries(an+1)]);
+  const plages=[[hm2min(c.midiDe),hm2min(c.midiA)],[hm2min(c.soirDe),hm2min(c.soirA)]];
+  const kDeb=dateKey(debMois), kFin=dateKey(new Date(an,mo,0));
+  // tous les équipiers, y compris ceux retirés en cours de mois (leurs heures restent à payer)
+  const emps={}; state.employees.forEach(e=>emps[e.id]=e);
+  try{ (await db.collection("employees").get()).docs.forEach(d=>{ if(!emps[d.id]) emps[d.id]={id:d.id,...d.data()}; }); }catch(e){ console.warn("employees",e); }
+  const parEmp={}, incomplets=[];
+  punches.forEach(p=>{ (parEmp[p.employeeId]=parEmp[p.employeeId]||{name:p.employeeName,jours:{}}); const k=dateKey(p.timestamp.toDate()); (parEmp[p.employeeId].jours[k]=parEmp[p.employeeId].jours[k]||[]).push(p); });
+  Object.values(emps).forEach(e=>{ if(!parEmp[e.id] && e.active!==false) parEmp[e.id]={name:e.name,jours:{}}; });
+
+  paieCache=[];
+  Object.entries(parEmp).forEach(([id,d])=>{
+    const emp=emps[id]||{}, C=Number(emp.contractHours)||0, extra=emp.contractType==="Extra", partiel=!extra && C>0 && C<35;
+    const r={ id, name:emp.name||d.name, contrat:`${emp.contractType||"—"}${C?" · "+C+"h":""}${partiel?" (temps partiel)":""}`, jours:0, msMois:0, hs10:0, hs20:0, hs50:0, hc10:0, hcPlus:0, repas:0, dim:0, fer:[], detail:[], abs:{} };
+    const semaines={};
+    Object.entries(d.jours).sort().forEach(([k,ps])=>{
+      ps.sort((x,y)=>x.timestamp.toMillis()-y.timestamp.toMillis());
+      const sess=[]; let ouvert=null;
+      ps.forEach(p=>{ const t=p.timestamp.toDate(); if(p.type==="in"||p.type==="resume") ouvert=t; else if((p.type==="pause"||p.type==="out")&&ouvert){ sess.push([ouvert,t]); ouvert=null; } });
+      if(ouvert && k>=kDeb && k<=kFin) incomplets.push(`${r.name} le ${k.split("-").reverse().join("/")}`);
+      const ms=sess.reduce((s,[a,b])=>s+(b-a),0); if(!ms) return;
+      const j=new Date(k+"T12:00:00"), lun=new Date(j); lun.setDate(lun.getDate()-((lun.getDay()+6)%7)); const dim=new Date(lun); dim.setDate(dim.getDate()+6);
+      const kw=dateKey(dim); semaines[kw]=(semaines[kw]||0)+ms;
+      if(k<kDeb||k>kFin) return;
+      let rep=0;
+      plages.forEach(([pd,pf])=>{ const base=new Date(k+"T00:00:00").getTime(); const d1=base+pd*60000, d2=base+pf*60000; const chev=sess.reduce((s,[a,b])=>s+Math.max(0,Math.min(b.getTime(),d2)-Math.max(a.getTime(),d1)),0); if(chev>=c.presenceMin*60000) rep++; });
+      r.jours++; r.msMois+=ms; r.repas+=rep;
+      if(j.getDay()===0) r.dim++;
+      if(feries.has(k)) r.fer.push(k.slice(8)+"/"+k.slice(5,7));
+      r.detail.push({k, ms, rep, entree:fmtTime(sess[0][0]), sortie:fmtTime(sess[sess.length-1][1])});
+    });
+    Object.entries(semaines).forEach(([kDim,ms])=>{
+      if(kDim<kDeb||kDim>kFin) return;
+      const H=ms/3600000;
+      if(partiel){ const hc=Math.max(0,H-C), lim=C*0.1; r.hc10+=Math.min(hc,lim); r.hcPlus+=Math.max(0,hc-lim); }
+      else { r.hs10+=Math.max(0,Math.min(H,39)-35); r.hs20+=Math.max(0,Math.min(H,43)-39); r.hs50+=Math.max(0,H-43); }
+    });
+    absences.filter(x=>x.empId===id && x.start<=kFin && x.end>=kDeb).forEach(x=>{
+      let n=0; for(let t=new Date((x.start>kDeb?x.start:kDeb)+"T12:00:00"); dateKey(t)<=(x.end<kFin?x.end:kFin); t.setDate(t.getDate()+1)){ if(x.type==="CP"){ if(t.getDay()!==0 && !feries.has(dateKey(t))) n++; } else n++; }
+      r.abs[x.type]=(r.abs[x.type]||0)+n;
+    });
+    if(r.jours||Object.keys(r.abs).length) paieCache.push(r);
+  });
+  paieCache.sort((a,b)=>a.name.localeCompare(b.name));
+  document.getElementById("paie-alertes").innerHTML = incomplets.length ? `<div style="background:#fdecea;color:#7a1f1a;border:1px solid #e5534b;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px">⚠️ <b>${incomplets.length} journée(s) avec une entrée sans sortie</b> (heures non comptées) : ${incomplets.map(escapeHtml).join(", ")}. Corrige-les dans « Contrôle des pointages » puis recalcule.</div>` : "";
+  const h=v=>v>0.004?String(Math.round(v*100)/100).replace(".",","):"—";
+  tbody.innerHTML = paieCache.length ? paieCache.map((r,i)=>`<tr>
+    <td><b>${escapeHtml(r.name)}</b></td><td>${escapeHtml(r.contrat)}</td><td>${r.jours}</td><td><b>${fmtH(r.msMois)}</b><br><small>${dec(r.msMois)} h</small></td>
+    <td>${h(r.hs10)}</td><td>${h(r.hs20)}</td><td>${h(r.hs50)}</td><td>${h(r.hc10)}</td><td style="${r.hcPlus>0?"color:var(--danger);font-weight:700":""}">${h(r.hcPlus)}</td>
+    <td>${r.repas}</td><td>${(r.repas*c.mg).toFixed(2).replace(".",",")} €</td><td>${r.dim} dim.${r.fer.length?"<br>"+r.fer.length+" férié(s) : "+r.fer.join(", "):""}</td>
+    <td>${Object.entries(r.abs).map(([t,n])=>`${ABS_LIB[t]||t} : ${n} j`).join("<br>")||"—"}</td>
+    <td><button class="btn btn-ghost btn-sm" data-paie="${i}">Détail</button></td></tr>`).join("")
+    : `<tr><td colspan="14" style="text-align:center;padding:30px;">Aucun pointage ce mois-ci.</td></tr>`;
+  tbody.querySelectorAll("[data-paie]").forEach(b=>b.addEventListener("click",()=>detailPaie(paieCache[b.dataset.paie])));
+  document.getElementById("paie-detail").innerHTML="";
+}
+function detailPaie(r){
+  document.getElementById("paie-detail").innerHTML=`<div style="margin-top:16px"><div class="admin-h" style="font-size:18px">${escapeHtml(r.name)} — détail des jours</div>
+  <table><thead><tr><th>Date</th><th>Entrée</th><th>Sortie</th><th>Heures</th><th>Repas</th></tr></thead><tbody>
+  ${r.detail.map(d=>`<tr><td>${new Date(d.k+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"})}</td><td>${d.entree}</td><td>${d.sortie}</td><td>${fmtH(d.ms)}</td><td>${d.rep}</td></tr>`).join("")}
+  </tbody></table></div>`;
+  document.getElementById("paie-detail").scrollIntoView({behavior:"smooth"});
+}
+function exportPaieCsv(){
+  if(!paieCache.length){ showToast("Rien à exporter"); return; }
+  const c=paieCfg(), n=v=>String(Math.round(v*100)/100).replace(".",",");
+  let csv="Équipier;Contrat;Jours travaillés;Heures du mois;HS +10%;HS +20%;HS +50%;H. compl. +10%;H. compl. au-delà;Repas;Avantage repas (€);Dimanches;Jours fériés travaillés;Absences\n";
+  paieCache.forEach(r=>{ csv+=[r.name,r.contrat,r.jours,dec(r.msMois),n(r.hs10),n(r.hs20),n(r.hs50),n(r.hc10),n(r.hcPlus),r.repas,(r.repas*c.mg).toFixed(2).replace(".",","),r.dim,r.fer.join(" "),Object.entries(r.abs).map(([t,x])=>`${ABS_LIB[t]||t} ${x} j`).join(" / ")].join(";")+"\n"; });
+  exportCsv(csv, `preparation_paie_${val("paie-month")}.csv`);
+}

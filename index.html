@@ -389,7 +389,7 @@ a{color:var(--gold)}
     <button id="activation-btn" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:var(--gold-lo);color:var(--ink);font-weight:700;font-size:16px;cursor:pointer">🔓 Activer</button>
     <div id="activation-err" style="color:var(--red);font-size:13px;min-height:18px;margin-top:10px"></div>
     <button id="activation-oubli" type="button" style="background:none;border:none;color:var(--gold);text-decoration:underline;font-size:13px;cursor:pointer;margin-top:4px">Mot de passe oublié ?</button>
-    <div style="font-size:11px;color:var(--muted);margin-top:14px">Pointeuse · v.19/11/2026 16:20</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:14px">Pointeuse · v.19/11/2026 17:27</div>
   </div>
 </div>
 <div id="app">
@@ -399,7 +399,7 @@ a{color:var(--gold)}
     <div class="topbar">
       <div class="brand">
         <div class="brand-mark">M&S</div>
-        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.19/11/2026 16:20</span></div>
+        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.19/11/2026 17:27</span></div>
       </div>
       <div class="clock" id="home-clock">--:--<span class="date" id="home-date">—</span></div>
       <div class="admin-dot" id="admin-dot-trigger" title=""></div>
@@ -453,6 +453,7 @@ a{color:var(--gold)}
       <div class="admin-tab" data-tab="anomalies">Anomalies</div>
       <div class="admin-tab" data-tab="employees">Équipiers</div>
       <div class="admin-tab" data-tab="reports">Rapports mensuels</div>
+      <div class="admin-tab" data-tab="paie">Préparation de paie</div>
       <div class="admin-tab" data-tab="settings">Réglages</div>
     </div>
     <div class="admin-body">
@@ -561,6 +562,37 @@ a{color:var(--gold)}
             <tbody id="report-detail-body"></tbody>
           </table>
           <div id="report-detail-total" style="text-align:right;margin-top:14px;font-family:'Big Shoulders Display',sans-serif;font-size:18px;font-weight:700;color:var(--text);"></div>
+        </div>
+      </div>
+
+      <div class="admin-section" id="tab-paie">
+        <div class="admin-row-title">
+          <div class="admin-h">Préparation de paie</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <select id="paie-month" style="border:1.5px solid var(--line);border-radius:10px;padding:9px 14px;font-family:Inter;font-size:14px;"></select>
+            <button class="btn btn-ghost btn-sm" id="paie-refresh-btn">Calculer</button>
+            <button class="btn btn-primary btn-sm" id="paie-csv-btn">Exporter CSV</button>
+          </div>
+        </div>
+        <div id="paie-alertes"></div>
+        <div style="overflow-x:auto">
+        <table id="paie-table">
+          <thead><tr><th>Équipier</th><th>Contrat</th><th>Jours</th><th>Heures du mois</th><th>HS +10 %</th><th>HS +20 %</th><th>HS +50 %</th><th>H. compl. +10 %</th><th>H. compl. au-delà</th><th>Repas</th><th>Avantage repas</th><th>Dim. / fériés</th><th>Absences</th><th></th></tr></thead>
+          <tbody id="paie-table-body"></tbody>
+        </table>
+        </div>
+        <div id="paie-detail"></div>
+        <div style="margin-top:18px;padding:14px 16px;background:var(--gold-soft);border-radius:12px;font-size:13px;line-height:1.5">
+          <b>Réglages du calcul</b>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin:10px 0">
+            <label>Repas du midi de <input type="time" id="paie-midi-de"> à <input type="time" id="paie-midi-a"></label>
+            <label>Repas du soir de <input type="time" id="paie-soir-de"> à <input type="time" id="paie-soir-a"></label>
+            <label>Présence minimum dans la plage : <input type="number" id="paie-presence" min="1" max="240" style="width:70px"> min</label>
+            <label>Valeur d'un repas (minimum garanti) : <input type="number" id="paie-mg" step="0.01" style="width:80px"> €</label>
+            <button class="btn btn-primary btn-sm" id="paie-save-btn">Enregistrer</button>
+          </div>
+          <b>Règles appliquées (toutes)</b>
+          <ul id="paie-regles" style="margin:6px 0 0 18px;padding:0"></ul>
         </div>
       </div>
 
@@ -673,6 +705,6 @@ a{color:var(--gold)}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="app.js?v=202611191620"></script>
+<script src="app.js?v=202611191727"></script>
 </body>
 </html>
