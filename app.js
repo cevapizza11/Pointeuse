@@ -50,6 +50,23 @@ const MIN_DAILY_REST_MS = 11 * 60 * 60 * 1000;     // 11h : repos quotidien mini
 const MAX_WEEKLY_WORK_MS = 48 * 60 * 60 * 1000;    // 48h : plafond absolu hebdomadaire
 
 function pad(n){ return n.toString().padStart(2,"0"); }
+
+// Plus longue période de travail D'AFFILÉE (sans pause ni sortie) dans une liste de pointages.
+// C'est ce temps-là qui est comparé au seuil de 5h : une pause pointée remet le compteur à zéro.
+// withOpen=true : compte aussi la période en cours (jusqu'à maintenant), pour l'alerte en direct.
+function longestStretchMs(punches, withOpen){
+  const sorted = [...punches].filter(Boolean).sort((a,b)=>a.timestamp.toMillis()-b.timestamp.toMillis());
+  let best = 0, openStart = null;
+  sorted.forEach(p=>{
+    const t = p.timestamp.toMillis();
+    if(p.type==="in" || p.type==="resume") openStart = t;
+    else if((p.type==="pause" || p.type==="out") && openStart!==null){
+      best = Math.max(best, t - openStart); openStart = null;
+    }
+  });
+  if(withOpen && openStart!==null) best = Math.max(best, Date.now() - openStart);
+  return best;
+}
 function nowParts(){
   const d = new Date();
   return { h: d.getHours(), m: d.getMinutes(), s: d.getSeconds(), d };
@@ -101,8 +118,9 @@ function checkLiveAnomalies(){
   if(document.getElementById("screen-home").classList.contains("active") === false) return;
   state.employees.forEach(emp=>{
     const {status} = lastStatusFor(emp.id);
-    if(status === "out") { liveAnomalyShownFor.delete(emp.id); return; }
-    const ms = totalWorkedMs(emp.id);
+    if(status !== "in") { liveAnomalyShownFor.delete(emp.id); return; } // en pause ou sorti : compteur remis à zéro
+    // Temps d'affilée depuis la dernière arrivée/reprise (et non le total de la journée)
+    const ms = longestStretchMs(state.todayPunches.filter(p=>p.employeeId===emp.id && p.type!=="out"), true);
     if(ms > ANOMALY_THRESHOLD_MS && !liveAnomalyShownFor.has(emp.id)){
       liveAnomalyShownFor.add(emp.id);
       showLiveAnomalyBanner(emp.name, ms);
@@ -118,7 +136,7 @@ function showLiveAnomalyBanner(name, ms){
   list.innerHTML = `
     <div class="anomaly-item">
       <div class="anomaly-item-name">${escapeHtml(name)}</div>
-      <div class="anomaly-item-detail">Toujours pointé(e) en service depuis plus de 5h (<b>${fmtDuration(ms)}</b>). Vérifiez qu'il ne s'agit pas d'un oubli de dépointage.</div>
+      <div class="anomaly-item-detail">En service depuis plus de 5h d'affilée sans pause (<b>${fmtDuration(ms)}</b>). Vérifiez qu'il ne s'agit pas d'un oubli de dépointage.</div>
     </div>`;
   modal.classList.add("show");
 }
@@ -180,7 +198,7 @@ const LEGAL_ANOMALY_LABELS = {
   daily_rest: "Repos quotidien < 11h",
   weekly_max: "Plafond 48h/semaine dépassé",
   complementary: "Heures complémentaires (temps partiel)",
-  long_session: "Session anormalement longue (>5h sans pointage)"
+  long_session: "Plus de 5h d'affilée sans pause"
 };
 
 // Enregistre les anomalies détectées dans Firestore avec un ID stable (pas de doublons).
@@ -189,7 +207,7 @@ async function persistAnomalies(sessionAnomalies, legalAnomalies){
   const all = [
     ...sessionAnomalies.map(r=>({
       type:"long_session", employeeId:r.employeeId, name:r.name, refDateKey:r.refDateKey,
-      detail:`Session ${r.inTime} → ${r.outTime !== "—" ? r.outTime : "en cours"} : ${fmtDuration(r.totalMs)} sans pointage intermédiaire`,
+      detail:`Passage ${r.inTime} → ${r.outTime !== "—" ? r.outTime : "en cours"} : ${fmtDuration(r.stretchMs ?? r.totalMs)} d'affilée sans pause`,
       docId: `${r.employeeId}_long_session_${r.refDateKey}_${r.sessionIdx}`
     })),
     ...legalAnomalies.map(a=>({
@@ -293,12 +311,13 @@ async function syncAnomaliesForDay(refDate){
     const sessions = splitIntoSessionsLocal(data.punches);
     sessions.forEach((s, idx)=>{
       const ms = sessionMs(s);
-      if(ms > ANOMALY_THRESHOLD_MS){
+      const stretch = longestStretchMs([s.in, s.pause, s.resume, s.out], false);
+      if(stretch > ANOMALY_THRESHOLD_MS){
         sessionAnomalies.push({
           employeeId: empId, name: data.name, refDateKey, sessionIdx: idx,
           inTime: s.in ? fmtTime(s.in.timestamp.toDate()) : "—",
           outTime: s.out ? fmtTime(s.out.timestamp.toDate()) : "—",
-          totalMs: ms
+          totalMs: ms, stretchMs: stretch
         });
       }
     });
@@ -373,7 +392,7 @@ function showAnomalyPopupIfNeeded(rows, legalAnomalies){
     html += `
     <div class="anomaly-item">
       <div class="anomaly-item-name">${escapeHtml(r.name)}${r.sessionLabel ? ` · ${r.sessionLabel}` : ""}</div>
-      <div class="anomaly-item-detail">Session anormalement longue : ${r.inTime} → ${r.outTime !== "—" ? r.outTime : "toujours en service"} · <b>${fmtDuration(r.totalMs)}</b><br>Vérifiez qu'il ne s'agit pas d'un oubli de pointage.</div>
+      <div class="anomaly-item-detail">Plus de 5h d'affilée sans pause : ${r.inTime} → ${r.outTime !== "—" ? r.outTime : "toujours en service"} · <b>${fmtDuration(r.stretchMs ?? r.totalMs)}</b> d'affilée<br>Vérifiez qu'il ne s'agit pas d'un oubli de pointage de pause ou de sortie.</div>
     </div>`;
   });
 
@@ -630,8 +649,9 @@ async function renderControlTable(){
         resumeTime: s.resume ? fmtTime(s.resume.timestamp.toDate()) : "—",
         outTime: s.out ? fmtTime(s.out.timestamp.toDate()) : "—",
         totalMs: ms,
+        stretchMs: longestStretchMs([s.in, s.pause, s.resume, s.out], false),
         incomplete: !s.in || !s.out,
-        anomaly: ms > ANOMALY_THRESHOLD_MS
+        anomaly: longestStretchMs([s.in, s.pause, s.resume, s.out], false) > ANOMALY_THRESHOLD_MS
       });
     });
   });

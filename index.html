@@ -389,7 +389,7 @@ a{color:var(--gold)}
     <button id="activation-btn" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:var(--gold-lo);color:var(--ink);font-weight:700;font-size:16px;cursor:pointer">🔓 Activer</button>
     <div id="activation-err" style="color:var(--red);font-size:13px;min-height:18px;margin-top:10px"></div>
     <button id="activation-oubli" type="button" style="background:none;border:none;color:var(--gold);text-decoration:underline;font-size:13px;cursor:pointer;margin-top:4px">Mot de passe oublié ?</button>
-    <div style="font-size:11px;color:var(--muted);margin-top:14px">Pointeuse · v.19/11/2026 18:05</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:14px">Pointeuse · v.20/11/2026 16:55</div>
   </div>
 </div>
 <div id="app">
@@ -399,7 +399,7 @@ a{color:var(--gold)}
     <div class="topbar">
       <div class="brand">
         <div class="brand-mark">M&S</div>
-        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.19/11/2026 18:05</span></div>
+        <div class="brand-text">MOULE & SMILE<span>Pointage équipe · v.20/11/2026 16:55</span></div>
       </div>
       <div class="clock" id="home-clock">--:--<span class="date" id="home-date">—</span></div>
       <div class="admin-dot" id="admin-dot-trigger" title=""></div>
@@ -497,7 +497,7 @@ a{color:var(--gold)}
         <div class="rules-info-box">
           <div class="rules-info-title">Seuils surveillés automatiquement</div>
           <ul class="rules-info-list">
-            <li><b>Session sans pointage &gt; 5h</b> — probable oubli de dépointage</li>
+            <li><b>Plus de 5h d'affilée sans pause</b> — mesuré depuis l'arrivée ou la dernière reprise : une pause pointée remet le compteur à zéro (probable oubli de pointage de pause ou de sortie)</li>
             <li><b>Amplitude journalière &gt; 13h</b> — entre la prise de poste et la fin de service</li>
             <li><b>Travail effectif &gt; 10h/jour</b> — durée maximale quotidienne</li>
             <li><b>Repos quotidien &lt; 11h</b> — entre la sortie d'un jour et l'entrée du lendemain</li>
@@ -708,6 +708,6 @@ a{color:var(--gold)}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="app.js?v=202611191805"></script>
+<script src="app.js?v=202611201655"></script>
 </body>
 </html>
